@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { AnimatePresence, motion } from "motion/react";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { getLenis } from "@/components/providers/SmoothScroll";
@@ -91,17 +92,19 @@ export function Loader() {
             exit={{ opacity: 0 }}
           />
           <motion.div
-            className="relative flex items-baseline gap-[0.1em]"
+            className="relative"
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           >
-            <span className="display text-5xl sm:text-6xl tracking-tight">
-              CTRL
-            </span>
-            <span className="font-mono text-xs uppercase tracking-[0.3em] text-accent-ink">
-              studio
-            </span>
+            <Image
+              src="/assets/logo-white.png"
+              alt="CTRLstudio"
+              width={106}
+              height={96}
+              priority
+              className="h-20 w-auto sm:h-24"
+            />
           </motion.div>
 
           {/* progress line */}

@@ -31,10 +31,29 @@
    headlines upgrade automatically. See README → "Adding the REFRIGERATOR font". */
 @font-face {
   font-family: "Refrigerator";
-  src:
-    url("/fonts/Refrigerator/Refrigerator.woff2") format("woff2"),
-    url("/fonts/Refrigerator/Refrigerator.woff") format("woff");
-  font-weight: 100 900;
+  src: url("/fonts/Refrigerator/Refrigerator-Light.woff2") format("woff2");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Refrigerator";
+  src: url("/fonts/Refrigerator/Refrigerator-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Refrigerator";
+  src: url("/fonts/Refrigerator/Refrigerator-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Refrigerator";
+  src: url("/fonts/Refrigerator/Refrigerator-Heavy.woff2") format("woff2");
+  font-weight: 800 900;
   font-style: normal;
   font-display: swap;
 }

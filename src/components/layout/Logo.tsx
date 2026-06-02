@@ -1,20 +1,24 @@
 import { cn } from "@/lib/utils";
 
 /**
- * Text wordmark for CTRLstudio. Crisp at any size and theme-aware.
- * To use the supplied SVG logo instead, swap the markup for:
- *   <Image src="/assets/logo.svg" alt="CTRLstudio" width={132} height={24} />
+ * CTRLstudio wordmark, set in the real REFRIGERATOR (Refrigerator Deluxe):
+ * "CTRL" in Heavy + "STUDIO" in Light, letter-spaced — matching the brand logo.
+ * Crisp at any size and theme-aware (white on the dark UI).
+ * The full graphic logo lives at /public/assets/logo-white.png (used in the loader).
  */
 export function Logo({ className }: { className?: string }) {
   return (
-    <span className={cn("inline-flex items-baseline gap-[0.14em] leading-none", className)}>
-      <span className="display text-xl tracking-tight">CTRL</span>
-      <span className="relative font-mono text-[0.6rem] uppercase tracking-[0.32em] text-ink-dim">
+    <span
+      className={cn(
+        "inline-flex items-baseline gap-[0.18em] leading-none text-ink",
+        className,
+      )}
+    >
+      <span className="font-display text-xl font-extrabold uppercase tracking-[-0.01em]">
+        CTRL
+      </span>
+      <span className="font-display text-[0.72rem] font-light uppercase tracking-[0.42em]">
         studio
-        <span
-          aria-hidden
-          className="absolute -right-2 -top-1 h-1 w-1 rounded-[1px] bg-accent"
-        />
       </span>
     </span>
   );
