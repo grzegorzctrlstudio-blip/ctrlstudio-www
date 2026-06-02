@@ -2,6 +2,7 @@ import type { Service, ServiceVisual } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Reveal } from "@/components/ui/Reveal";
+import { Parallax } from "@/components/effects/Parallax";
 import { ParticleBackground } from "@/components/effects/ParticleBackground";
 import { MouseLight } from "@/components/effects/MouseLight";
 
@@ -44,7 +45,9 @@ function ServiceRow({ service, flip }: { service: Service; flip: boolean }) {
       </Reveal>
 
       <Reveal delay={0.1} className={cn(flip && "lg:order-1")}>
-        <ServiceVisualBlock visual={service.visual} />
+        <Parallax distance={26}>
+          <ServiceVisualBlock visual={service.visual} />
+        </Parallax>
       </Reveal>
     </div>
   );

@@ -6,6 +6,8 @@ import { buildMetadata } from "@/lib/seo";
 import { SmoothScroll } from "@/components/providers/SmoothScroll";
 import { Loader } from "@/components/providers/Loader";
 import { Cursor } from "@/components/effects/Cursor";
+import { AnimatedBackground } from "@/components/effects/AnimatedBackground";
+import { ScrollProgress } from "@/components/effects/ScrollProgress";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 
@@ -34,10 +36,12 @@ export default function RootLayout({
         </a>
 
         <div className="site-aurora" aria-hidden />
+        <AnimatedBackground />
 
         <SmoothScroll>
           <Loader />
           <Cursor />
+          <ScrollProgress />
           <div className="grain" aria-hidden />
           <Header />
           <main id="main" className="flex-1">

@@ -1,6 +1,7 @@
 "use client";
 
-import { motion, useReducedMotion } from "motion/react";
+import { useRef } from "react";
+import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
 import type { Cta } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
 import { TextReveal } from "@/components/ui/TextReveal";
@@ -15,9 +16,18 @@ interface HeroProps {
 
 export function Hero({ headline, subtext, ctas }: HeroProps) {
   const reduced = useReducedMotion();
+  const ref = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start start", "end start"],
+  });
+  const yRaw = useTransform(scrollYProgress, [0, 1], [0, -90]);
+  const opacityRaw = useTransform(scrollYProgress, [0, 0.85], [1, 0]);
+  const y = reduced ? 0 : yRaw;
+  const opacity = reduced ? 1 : opacityRaw;
 
   return (
-    <section className="relative min-h-svh w-full overflow-hidden">
+    <section ref={ref} className="relative min-h-svh w-full overflow-hidden">
       {/* interactive object / background */}
       <HeroObject />
       <MouseLight size="40rem" intensity={0.18} />
@@ -25,7 +35,10 @@ export function Hero({ headline, subtext, ctas }: HeroProps) {
       {/* legibility scrim toward the bottom where the copy sits */}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-bg via-bg/45 to-transparent" />
 
-      <div className="container-x relative z-10 flex min-h-svh flex-col justify-end pb-16 pt-[var(--header-h)]">
+      <motion.div
+        style={{ y, opacity }}
+        className="container-x relative z-10 flex min-h-svh flex-col justify-end pb-16 pt-[var(--header-h)]"
+      >
         <motion.span
           className="eyebrow mb-6 flex items-center gap-3"
           initial={reduced ? false : { opacity: 0 }}
@@ -70,7 +83,7 @@ export function Hero({ headline, subtext, ctas }: HeroProps) {
             ))}
           </motion.div>
         </div>
-      </div>
+      </motion.div>
 
       {/* scroll cue */}
       {!reduced && (

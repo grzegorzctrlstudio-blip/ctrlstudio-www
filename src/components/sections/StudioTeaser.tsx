@@ -2,6 +2,7 @@ import type { Homepage } from "@/lib/types";
 import { Reveal } from "@/components/ui/Reveal";
 import { TextReveal } from "@/components/ui/TextReveal";
 import { Button } from "@/components/ui/Button";
+import { Parallax } from "@/components/effects/Parallax";
 
 export function StudioTeaser({ data }: { data: Homepage["studioTeaser"] }) {
   return (
@@ -24,6 +25,7 @@ export function StudioTeaser({ data }: { data: Homepage["studioTeaser"] }) {
 
         {/* abstract visual */}
         <Reveal delay={0.1}>
+          <Parallax distance={28}>
           <div className="relative aspect-square w-full overflow-hidden rounded-2xl border border-line bg-bg-raised">
             <div className="absolute inset-0 grid-field opacity-70" />
             <div className="absolute inset-0 glow opacity-80" />
@@ -34,6 +36,7 @@ export function StudioTeaser({ data }: { data: Homepage["studioTeaser"] }) {
               Image · Technology · Space
             </span>
           </div>
+          </Parallax>
         </Reveal>
       </div>
     </section>
