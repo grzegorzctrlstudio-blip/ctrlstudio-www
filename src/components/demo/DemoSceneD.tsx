@@ -1,31 +1,32 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import {
   ContactShadows,
   Environment,
   Lightformer,
+  MeshReflectorMaterial,
   MeshTransmissionMaterial,
   RoundedBox,
 } from "@react-three/drei";
 import * as THREE from "three";
 import { useMouseRef, type MouseRef } from "@/components/demo/demoCommon";
 
-const GLASS_BG = new THREE.Color("#dfe3f1");
+const GLASS_BG = new THREE.Color("#0a1228");
 
-/** Reusable refined glass material (refraction + reflections + chromatic edge). */
+/** Refined glass: refraction + reflections (from the emissive environment). */
 function Glass() {
   return (
     <MeshTransmissionMaterial
       background={GLASS_BG}
       samples={10}
-      resolution={384}
+      resolution={320}
       transmission={1}
       roughness={0}
       thickness={0.9}
       ior={1.42}
-      chromaticAberration={0.02}
+      chromaticAberration={0.03}
       anisotropy={0}
       distortion={0}
       distortionScale={0}
@@ -33,8 +34,8 @@ function Glass() {
       clearcoat={1}
       clearcoatRoughness={0.05}
       attenuationDistance={4}
-      attenuationColor="#ffffff"
-      color="#ffffff"
+      attenuationColor="#cfe0ff"
+      color="#eaf1ff"
     />
   );
 }
@@ -70,11 +71,24 @@ function GlassModel({
   );
 }
 
-/** CTRL logo as a field of dark points, refracted through the glass behind. */
+/** CTRL logo as glowing blue points (B colourway), refracted by the glass. */
 function ParticleLogo({ mouse }: { mouse: MouseRef }) {
   const ref = useRef<THREE.Points>(null);
   const base = useRef<Float32Array | null>(null);
   const [geometry, setGeometry] = useState<THREE.BufferGeometry | null>(null);
+
+  const sprite = useMemo(() => {
+    const c = document.createElement("canvas");
+    c.width = c.height = 64;
+    const ctx = c.getContext("2d")!;
+    const g = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+    g.addColorStop(0, "rgba(255,255,255,1)");
+    g.addColorStop(0.35, "rgba(170,210,255,0.55)");
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, 64, 64);
+    return new THREE.CanvasTexture(c);
+  }, []);
 
   useEffect(() => {
     const img = new Image();
@@ -98,7 +112,7 @@ function ParticleLogo({ mouse }: { mouse: MouseRef }) {
             pts.push(
               (x / W - 0.5) * scaleX,
               -(y / H - 0.5) * scaleY,
-              -0.4 + (Math.random() - 0.5) * 0.1,
+              -0.5 + (Math.random() - 0.5) * 0.1,
             );
           }
         }
@@ -136,13 +150,14 @@ function ParticleLogo({ mouse }: { mouse: MouseRef }) {
 
   if (!geometry) return null;
   return (
-    <points ref={ref} geometry={geometry} position={[0, 0, -0.4]}>
+    <points ref={ref} geometry={geometry} position={[0, 0, -0.5]}>
       <pointsMaterial
-        size={0.022}
-        color="#2b2b45"
+        size={0.03}
+        map={sprite}
+        color="#bcd4ff"
         transparent
-        opacity={0.75}
         depthWrite={false}
+        blending={THREE.AdditiveBlending}
         sizeAttenuation
       />
     </points>
@@ -154,49 +169,64 @@ export function DemoSceneD() {
   return (
     <Canvas
       className="!fixed inset-0 !pointer-events-none"
-      dpr={[1, 1.8]}
-      camera={{ position: [0, 0, 6], fov: 42 }}
+      dpr={[1, 1.75]}
+      camera={{ position: [0, 0.3, 6], fov: 42 }}
       gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
     >
-      <ambientLight intensity={0.7} />
-      <directionalLight position={[5, 6, 5]} intensity={1.4} />
-      {/* HDR-free environment (built from emissive planes) → reflections without
-          any network fetch, so the glass renders reliably everywhere. */}
+      <ambientLight intensity={0.35} />
+      <directionalLight position={[5, 6, 5]} intensity={1.1} />
+      {/* emissive environment → reflections on the dark glass (no network) */}
       <Environment resolution={96}>
-        <Lightformer position={[0, 3, 3]} scale={7} intensity={2.2} color="#ffffff" />
-        <Lightformer position={[-3, 1, 2]} scale={5} intensity={1.4} color="#e6ecff" />
-        <Lightformer position={[3, -1, 2]} scale={5} intensity={1.2} color="#fff0f6" />
-        <Lightformer position={[0, -3, 1]} scale={6} intensity={0.9} color="#ffffff" />
+        <Lightformer position={[0, 4, 3]} scale={8} intensity={3} color="#cfe2ff" />
+        <Lightformer position={[-4, 1, 2]} scale={5} intensity={2} color="#6ea8ff" />
+        <Lightformer position={[4, -1, 3]} scale={5} intensity={1.6} color="#9cdcff" />
+        <Lightformer position={[0, -3, 2]} scale={6} intensity={1} color="#3b5bbf" />
       </Environment>
 
       <ParticleLogo mouse={mouse} />
 
-      <GlassModel position={[0, 0.1, 0.2]} factor={0.25} spin={0.6} mouse={mouse}>
+      <GlassModel position={[0, 0.2, 0.2]} factor={0.25} spin={0.6} mouse={mouse}>
         <RoundedBox args={[0.85, 1.7, 0.85]} radius={0.07} smoothness={5}>
           <Glass />
         </RoundedBox>
       </GlassModel>
-
-      <GlassModel position={[1.9, 0.7, 0.6]} factor={0.5} spin={1.1} mouse={mouse}>
+      <GlassModel position={[1.95, 0.8, 0.6]} factor={0.5} spin={1.1} mouse={mouse}>
         <mesh>
           <torusKnotGeometry args={[0.42, 0.15, 160, 28]} />
           <Glass />
         </mesh>
       </GlassModel>
-
-      <GlassModel position={[-1.9, -0.8, 0.5]} factor={0.45} spin={0.9} mouse={mouse}>
+      <GlassModel position={[-1.95, -0.7, 0.5]} factor={0.45} spin={0.9} mouse={mouse}>
         <RoundedBox args={[0.8, 0.8, 0.8]} radius={0.08} smoothness={5}>
           <Glass />
         </RoundedBox>
       </GlassModel>
 
+      {/* reflective floor (Hubtown-style water reflection) */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.95, 0]}>
+        <planeGeometry args={[40, 40]} />
+        <MeshReflectorMaterial
+          resolution={512}
+          blur={[400, 120]}
+          mixBlur={1}
+          mixStrength={30}
+          roughness={0.9}
+          depthScale={1.1}
+          minDepthThreshold={0.4}
+          maxDepthThreshold={1.3}
+          color="#060912"
+          metalness={0.55}
+          mirror={0}
+        />
+      </mesh>
+
       <ContactShadows
-        position={[0, -2.2, 0]}
-        opacity={0.28}
+        position={[0, -1.93, 0]}
+        opacity={0.4}
         scale={16}
         blur={3}
         far={5}
-        color="#454560"
+        color="#000010"
       />
     </Canvas>
   );

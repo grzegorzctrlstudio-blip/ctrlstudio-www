@@ -21,9 +21,9 @@ export default function DemoIndex() {
         <div className="grid w-full gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <DemoLink
             href="/demo/d"
-            tag="Demo D · jasny ★"
+            tag="Demo D · ciemny ★"
             title="Glass (B + C)"
-            desc="Szkło z odbiciami i cieniami + logo CTRL z cząsteczek w środku."
+            desc="Ciemno (kolory z B) + szkło z odbiciami, cieniami i lustrzaną taflą."
           />
           <DemoLink
             href="/demo/c"
