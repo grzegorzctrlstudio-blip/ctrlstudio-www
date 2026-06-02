@@ -40,6 +40,8 @@ export function Header() {
     };
   }, [open]);
 
+  if (pathname.startsWith("/demo")) return null;
+
   return (
     <>
       <header

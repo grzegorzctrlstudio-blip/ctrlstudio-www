@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { site } from "@/content/site";
 import { Logo } from "@/components/layout/Logo";
 import { getLenis } from "@/components/providers/SmoothScroll";
 
 export function Footer() {
+  const pathname = usePathname();
   const year = new Date().getFullYear();
 
   const toTop = () => {
@@ -13,6 +15,8 @@ export function Footer() {
     if (lenis) lenis.scrollTo(0);
     else window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+  if (pathname.startsWith("/demo")) return null;
 
   return (
     <footer className="relative border-t border-line bg-bg">

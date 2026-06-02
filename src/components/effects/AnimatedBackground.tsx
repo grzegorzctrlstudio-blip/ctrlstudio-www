@@ -24,7 +24,7 @@ export function AnimatedBackground() {
 
   useEffect(() => setMounted(true), []);
 
-  if (!mounted || reduced || !wide) return null;
+  if (!mounted || reduced || !wide || pathname.startsWith("/demo")) return null;
 
   // Punchy on the home hero; calm behind content-heavy pages (forms, grids).
   const intensity = pathname === "/" ? 1.1 : 0.5;
