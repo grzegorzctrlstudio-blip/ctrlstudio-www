@@ -49,9 +49,8 @@ export function DemoD() {
             powered by technology
           </h1>
           <p className="max-w-sm text-sm text-white/55">
-            Szkło z odbiciami i cieniami nad lustrzaną taflą, w środku świecące
-            logo CTRL z cząsteczek. Rusz myszką.{" "}
-            <span className="text-white/35">(demo, pełny ruch)</span>
+            Logo CTRL ze szkła — refrakcja, iryzacja, odbicia i lustrzana tafla.
+            Rusz myszką. <span className="text-white/35">(demo, pełny ruch)</span>
           </p>
           <div className="pointer-events-auto flex flex-wrap items-center justify-center gap-3">
             <Link
