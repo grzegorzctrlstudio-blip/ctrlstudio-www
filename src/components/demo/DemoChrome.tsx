@@ -4,10 +4,11 @@ const ALL = [
   ["a", "A"],
   ["b", "B"],
   ["c", "C"],
+  ["d", "D"],
 ] as const;
 
 /** Overlay for the dark demos (A, B): wordmark, label, headline, switcher. */
-export function DemoChrome({ current }: { current: "a" | "b" | "c" }) {
+export function DemoChrome({ current }: { current: "a" | "b" | "c" | "d" }) {
   const others = ALL.filter(([id]) => id !== current);
   return (
     <div className="pointer-events-none fixed inset-0 z-10 flex flex-col">

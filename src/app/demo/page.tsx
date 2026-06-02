@@ -18,12 +18,18 @@ export default function DemoIndex() {
             powiedz które robimy.
           </p>
         </div>
-        <div className="grid w-full gap-4 sm:grid-cols-3">
+        <div className="grid w-full gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <DemoLink
-            href="/demo/a"
-            tag="Demo A · ciemny"
-            title="Liquid Glass"
-            desc="Logo z ciekłego szkła — refrakcja, chromatyczne krawędzie."
+            href="/demo/d"
+            tag="Demo D · jasny ★"
+            title="Glass (B + C)"
+            desc="Szkło z odbiciami i cieniami + logo CTRL z cząsteczek w środku."
+          />
+          <DemoLink
+            href="/demo/c"
+            tag="Demo C · jasny"
+            title="Noomo"
+            desc="Jasno, wielka typografia, szklane bryły 3D + organiczny blob."
           />
           <DemoLink
             href="/demo/b"
@@ -32,10 +38,10 @@ export default function DemoIndex() {
             desc="Logo z tysięcy świecących punktów — odpływają od kursora."
           />
           <DemoLink
-            href="/demo/c"
-            tag="Demo C · jasny"
-            title="Noomo"
-            desc="Jasno, wielka typografia, szklane bryły 3D + organiczny blob."
+            href="/demo/a"
+            tag="Demo A · ciemny"
+            title="Liquid Glass"
+            desc="Logo z ciekłego szkła — refrakcja, chromatyczne krawędzie."
           />
         </div>
         <Link href="/" className="text-sm text-ink-dim transition-colors hover:text-ink">
