@@ -85,7 +85,7 @@
   }
 
   body {
-    background: var(--bg);
+    background: transparent; /* the fixed .site-aurora shows through */
     color: var(--ink);
     font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
@@ -226,6 +226,53 @@
       color-mix(in oklab, var(--accent) 30%, transparent) 0%,
       transparent 70%
     );
+  }
+
+  /* Site-wide colour field — fixed behind all content so the page is never
+     flat black. Visible even under reduced motion (pure CSS). */
+  .site-aurora {
+    position: fixed;
+    inset: 0;
+    z-index: -10;
+    pointer-events: none;
+    background:
+      radial-gradient(
+        38% 44% at 20% 16%,
+        color-mix(in oklab, var(--accent) 18%, transparent),
+        transparent 70%
+      ),
+      radial-gradient(
+        44% 52% at 84% 26%,
+        color-mix(in oklab, var(--accent-2) 15%, transparent),
+        transparent 72%
+      ),
+      radial-gradient(
+        60% 55% at 50% 104%,
+        color-mix(in oklab, var(--accent) 12%, transparent),
+        transparent 70%
+      );
+  }
+
+  /* Rich static aurora for the hero (and the reduced-motion / mobile fallback
+     where the animated shader doesn't run). */
+  .bg-aurora-hero {
+    background:
+      radial-gradient(
+        46% 56% at 28% 30%,
+        color-mix(in oklab, var(--accent) 34%, transparent),
+        transparent 70%
+      ),
+      radial-gradient(
+        52% 60% at 80% 60%,
+        color-mix(in oklab, var(--accent-2) 26%, transparent),
+        transparent 72%
+      ),
+      radial-gradient(
+        64% 60% at 50% 98%,
+        color-mix(in oklab, var(--accent) 16%, transparent),
+        transparent 70%
+      ),
+      #060507;
   }
 
   .grid-field {

@@ -33,6 +33,8 @@ export default function RootLayout({
           Przejdź do treści
         </a>
 
+        <div className="site-aurora" aria-hidden />
+
         <SmoothScroll>
           <Loader />
           <Cursor />

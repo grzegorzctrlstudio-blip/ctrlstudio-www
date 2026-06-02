@@ -12,6 +12,10 @@ const HeroScene = dynamic(
   () => import("@/components/effects/HeroScene").then((m) => m.HeroScene),
   { ssr: false },
 );
+const ShaderBackground = dynamic(
+  () => import("@/components/effects/ShaderBackground").then((m) => m.ShaderBackground),
+  { ssr: false },
+);
 
 export function HeroObject() {
   const reduced = usePrefersReducedMotion();
@@ -38,6 +42,14 @@ export function HeroObject() {
 
   return (
     <div ref={ref} className="absolute inset-0" aria-hidden>
+      {/* animated nebula background — or a rich static aurora as fallback */}
+      {use3D ? (
+        <ShaderBackground active={visible} intensity={1.05} />
+      ) : (
+        <div className="absolute inset-0 bg-aurora-hero" />
+      )}
+
+      {/* central interactive object */}
       {use3D ? (
         <HeroScene active={visible} />
       ) : (
