@@ -12,7 +12,7 @@ export function DemoA() {
   return (
     <>
       <Scene />
-      <DemoChrome label="A" other="b" />
+      <DemoChrome current="a" />
     </>
   );
 }

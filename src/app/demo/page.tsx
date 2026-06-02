@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export default function DemoIndex() {
   return (
     <section className="relative grid min-h-svh place-items-center px-6">
-      <div className="flex w-full max-w-2xl flex-col items-center gap-10 text-center">
+      <div className="flex w-full max-w-4xl flex-col items-center gap-10 text-center">
         <div className="flex flex-col gap-3">
           <span className="eyebrow">Koncepcje hero</span>
           <h1 className="display-xl text-gradient">Wybierz kierunek</h1>
@@ -18,18 +18,24 @@ export default function DemoIndex() {
             powiedz które robimy.
           </p>
         </div>
-        <div className="grid w-full gap-4 sm:grid-cols-2">
+        <div className="grid w-full gap-4 sm:grid-cols-3">
           <DemoLink
             href="/demo/a"
-            tag="Demo A"
+            tag="Demo A · ciemny"
             title="Liquid Glass"
-            desc="Logo z ciekłego szkła — refrakcja, rozmycie, chromatyczne krawędzie."
+            desc="Logo z ciekłego szkła — refrakcja, chromatyczne krawędzie."
           />
           <DemoLink
             href="/demo/b"
-            tag="Demo B"
+            tag="Demo B · ciemny"
             title="Particle Field"
             desc="Logo z tysięcy świecących punktów — odpływają od kursora."
+          />
+          <DemoLink
+            href="/demo/c"
+            tag="Demo C · jasny"
+            title="Noomo"
+            desc="Jasno, wielka typografia, szklane bryły 3D + organiczny blob."
           />
         </div>
         <Link href="/" className="text-sm text-ink-dim transition-colors hover:text-ink">
