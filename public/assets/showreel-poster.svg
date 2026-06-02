@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" fill="none" role="img" aria-label="Showreel poster">
+  <defs>
+    <radialGradient id="g" cx="50%" cy="38%" r="65%">
+      <stop offset="0%" stop-color="#1a1830"/>
+      <stop offset="72%" stop-color="#060507"/>
+    </radialGradient>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M48 0H0V48" fill="none" stroke="#ffffff" stroke-opacity="0.06" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="1280" height="720" fill="url(#g)"/>
+  <rect width="1280" height="720" fill="url(#grid)"/>
+  <circle cx="640" cy="350" r="58" fill="none" stroke="#ffffff" stroke-opacity="0.35"/>
+  <path d="M624 324 L672 350 L624 376 Z" fill="#f4f4f6"/>
+  <text x="640" y="466" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="22" letter-spacing="9" fill="#a2a2ad">SHOWREEL</text>
+</svg>

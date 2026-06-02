@@ -1,0 +1,23 @@
+CTRLstudio — brand & media assets
+==================================
+
+This folder holds the real brand assets. Placeholders are already in place so
+the site looks intentional out of the box — replace them when ready.
+
+Files the site looks for:
+
+  logo.svg              ✓ placeholder present — replace with the real CTRLstudio logo
+  logo.png              (optional) raster fallback of the logo
+  showreel.mp4          ⬅ ADD THIS — the showreel video (H.264 .mp4 recommended)
+  showreel-poster.svg   ✓ placeholder poster present — replace with a still frame
+                          (a .jpg/.png frame from the showreel looks best)
+
+Notes
+-----
+• Showreel: keep it web-optimised (1080p, ~6–10 Mbps). It is lazy-loaded and
+  never autoplays, so large files won't hurt first paint — but smaller is better
+  on mobile. Update the path in src/content/homepage.ts if you rename it.
+• The social share image (Open Graph) is generated automatically as a PNG from
+  src/app/opengraph-image.tsx — no file needed here.
+• The text logo in the header is rendered from src/components/layout/Logo.tsx.
+  To use this SVG instead, see the comment in that file.

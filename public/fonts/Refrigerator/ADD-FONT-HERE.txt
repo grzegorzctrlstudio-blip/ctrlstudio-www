@@ -1,0 +1,20 @@
+REFRIGERATOR — custom display font
+===================================
+
+Place your licensed REFRIGERATOR web-font file(s) in THIS folder:
+
+    public/fonts/Refrigerator/Refrigerator.woff2   (recommended)
+    public/fonts/Refrigerator/Refrigerator.woff    (optional fallback)
+
+The @font-face declaration already points here — see:
+    src/app/globals.css  →  @font-face { font-family: "Refrigerator"; ... }
+
+Until a file is present, all headings gracefully fall back to Geist, so the
+site never looks broken.
+
+If your file has a different name (e.g. RefrigeratorDeluxe-Bold.woff2):
+  • either rename it to Refrigerator.woff2, OR
+  • update the url(...) paths in the @font-face block in globals.css.
+
+You can convert .otf/.ttf to .woff2 with https://www.fontsquirrel.com/tools/webfont-generator
+(make sure your licence permits web embedding).
