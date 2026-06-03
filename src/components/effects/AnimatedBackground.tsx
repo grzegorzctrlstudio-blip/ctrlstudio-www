@@ -27,7 +27,8 @@ export function AnimatedBackground() {
     !wide ||
     pathname.startsWith("/scroll") ||
     pathname.startsWith("/tlo") ||
-    pathname.startsWith("/logo3d")
+    pathname.startsWith("/logo3d") ||
+    pathname === "/"
   )
     return null;
 

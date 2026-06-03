@@ -1,6 +1,13 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Suspense,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MutableRefObject,
+} from "react";
 import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
@@ -8,12 +15,12 @@ import { SVGLoader } from "three/examples/jsm/loaders/SVGLoader.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 /**
- * The "studio" for the 3D logo: a clean cyclorama-style scene with real
- * environment reflections (RoomEnvironment), studio lighting, a calm shader
- * backdrop and mouse-orbit. The logo is the REAL CTRLstudio mark — its outlines
- * are traced from the brand PNG to an SVG (public/assets/ctrl-logo.svg) and
- * extruded to genuine 3D geometry here. If a Spline/Blender ctrl-logo.glb is
- * present it is preferred instead.
+ * 3D studio for the real CTRLstudio mark. Outlines are traced from the brand
+ * PNG to /assets/ctrl-logo.svg and extruded to genuine 3D here, with
+ * RoomEnvironment reflections, studio lighting, a calm shader backdrop and
+ * mouse-orbit. A Spline/Blender /assets/ctrl-logo.glb is preferred if present.
+ * `fade` (1→0) dissolves the logo (used by the homepage hero as the showreel
+ * expands).
  */
 
 const GLB_URL = "/assets/ctrl-logo.glb";
@@ -32,6 +39,7 @@ function usePointer() {
   return p;
 }
 type Pointer = ReturnType<typeof usePointer>;
+type FadeRef = MutableRefObject<number>;
 
 function StudioEnv() {
   const { gl, scene } = useThree();
@@ -121,7 +129,7 @@ function chromeMaterial() {
   });
 }
 
-function SvgLogo({ pointer }: { pointer: Pointer }) {
+function SvgLogo({ pointer, fadeRef }: { pointer: Pointer; fadeRef: FadeRef }) {
   const data = useLoader(SVGLoader, SVG_URL);
   const { viewport } = useThree();
   const group = useRef<THREE.Group>(null);
@@ -150,9 +158,12 @@ function SvgLogo({ pointer }: { pointer: Pointer }) {
 
   useFrame(() => {
     if (!group.current) return;
-    const target = viewport.width * 0.62;
-    const s = target / width;
-    group.current.scale.set(s, -s, s); // flip Y (SVG is y-down)
+    const s = (viewport.width * 0.62) / width;
+    group.current.scale.set(s, -s, s);
+    const fade = fadeRef.current;
+    mat.opacity = fade;
+    mat.transparent = fade < 0.999;
+    group.current.visible = fade > 0.02;
   });
 
   return (
@@ -162,7 +173,7 @@ function SvgLogo({ pointer }: { pointer: Pointer }) {
   );
 }
 
-function GlbLogo({ pointer }: { pointer: Pointer }) {
+function GlbLogo({ pointer, fadeRef }: { pointer: Pointer; fadeRef: FadeRef }) {
   const gltf = useLoader(GLTFLoader, GLB_URL);
   const { viewport } = useThree();
   const group = useRef<THREE.Group>(null);
@@ -176,13 +187,24 @@ function GlbLogo({ pointer }: { pointer: Pointer }) {
     box.getSize(size);
     box.getCenter(center);
     s.position.sub(center);
-    return { s, w: size.x || 1 };
+    const mats: THREE.Material[] = [];
+    s.traverse((o) => {
+      const m = (o as THREE.Mesh).material as THREE.Material | THREE.Material[];
+      if (Array.isArray(m)) mats.push(...m);
+      else if (m) mats.push(m);
+    });
+    return { s, w: size.x || 1, mats };
   }, [gltf]);
 
   useFrame(() => {
     if (!group.current) return;
-    const target = viewport.width * 0.6;
-    group.current.scale.setScalar(Math.min(target / model.w, 2));
+    group.current.scale.setScalar(Math.min((viewport.width * 0.6) / model.w, 2));
+    const fade = fadeRef.current;
+    for (const m of model.mats) {
+      m.transparent = fade < 0.999;
+      m.opacity = fade;
+    }
+    group.current.visible = fade > 0.02;
   });
 
   return (
@@ -192,7 +214,15 @@ function GlbLogo({ pointer }: { pointer: Pointer }) {
   );
 }
 
-function Scene({ glb, pointer }: { glb: boolean; pointer: Pointer }) {
+function Scene({
+  glb,
+  pointer,
+  fadeRef,
+}: {
+  glb: boolean;
+  pointer: Pointer;
+  fadeRef: FadeRef;
+}) {
   return (
     <>
       <StudioEnv />
@@ -202,14 +232,26 @@ function Scene({ glb, pointer }: { glb: boolean; pointer: Pointer }) {
       <directionalLight position={[-5, -1, 2]} intensity={0.7} color="#b06bff" />
       <pointLight position={[0, 1, 5]} intensity={1.2} color="#9aa6ff" />
       <Suspense fallback={null}>
-        {glb ? <GlbLogo pointer={pointer} /> : <SvgLogo pointer={pointer} />}
+        {glb ? (
+          <GlbLogo pointer={pointer} fadeRef={fadeRef} />
+        ) : (
+          <SvgLogo pointer={pointer} fadeRef={fadeRef} />
+        )}
       </Suspense>
     </>
   );
 }
 
-export function Logo3D() {
+export function Logo3D({
+  fade = 1,
+  className = "pointer-events-none fixed inset-0 z-0 bg-bg",
+}: {
+  fade?: number;
+  className?: string;
+}) {
   const pointer = usePointer();
+  const fadeRef = useRef(1);
+  fadeRef.current = fade;
   const [glb, setGlb] = useState(false);
 
   useEffect(() => {
@@ -219,14 +261,14 @@ export function Logo3D() {
   }, []);
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-0 bg-bg" aria-hidden>
+    <div className={className} aria-hidden>
       <Canvas
         className="!fixed inset-0"
         dpr={[1, 1.75]}
         gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
         camera={{ position: [0, 0, 6], fov: 35 }}
       >
-        <Scene glb={glb} pointer={pointer} />
+        <Scene glb={glb} pointer={pointer} fadeRef={fadeRef} />
       </Canvas>
     </div>
   );
