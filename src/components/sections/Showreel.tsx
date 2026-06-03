@@ -4,35 +4,49 @@ import { useRef } from "react";
 import { motion, useScroll, useTransform } from "motion/react";
 import type { Homepage } from "@/lib/types";
 
-const WORDS = ["Content", "Technology", "Space"];
-const EASE_OUT = [0.16, 1, 0.3, 1] as const;
-
 /**
- * Showreel: a portrait window that scales in as it enters the viewport, with
- * CONTENT / TECHNOLOGY / SPACE stacked vertically and revealing one by one.
- * The media is the local cosmic clip for now — swap `mediaSrc` for the Vimeo
- * showreel once its embedding is enabled.
+ * Showreel: a wide 16:9 window that scales in as it enters the viewport, with
+ * CONTENT / TECHNOLOGY / SPACE that spread apart across it on scroll. Media is
+ * the local cosmic clip for now — swap for the Vimeo showreel once embedding is
+ * enabled.
  */
 export function Showreel({ data }: { data: Homepage["showreel"] }) {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: ref,
-    offset: ["start 85%", "center 55%"],
+    offset: ["start 85%", "end 55%"],
   });
-  const scale = useTransform(scrollYProgress, [0, 1], [0.8, 1]);
-  const opacity = useTransform(scrollYProgress, [0, 0.6], [0, 1]);
+
+  const scale = useTransform(scrollYProgress, [0, 0.6], [0.86, 1]);
+  const opacity = useTransform(scrollYProgress, [0, 0.4], [0, 1]);
+  const textOpacity = useTransform(scrollYProgress, [0.05, 0.3], [0, 1]);
+  const xLeft = useTransform(scrollYProgress, [0.15, 0.85], ["0vw", "-17vw"]);
+  const xRight = useTransform(scrollYProgress, [0.15, 0.85], ["0vw", "17vw"]);
+
+  // two-line heading
+  const t = data.text;
+  const cut = (() => {
+    const i = t.indexOf(" ", Math.floor(t.length / 2) - 6);
+    return i < 0 ? t.length : i;
+  })();
+  const line1 = t.slice(0, cut);
+  const line2 = t.slice(cut + 1);
+
+  const word =
+    "font-display text-2xl font-bold uppercase tracking-tight text-gradient sm:text-4xl md:text-5xl";
 
   return (
     <section id="showreel" className="section flex flex-col items-center">
       <p className="eyebrow mb-3">Showreel</p>
-      <h2 className="display-lg mb-12 max-w-[18ch] text-center text-balance">
-        {data.text}
+      <h2 className="mb-12 max-w-[42ch] text-center font-display text-xl font-bold uppercase tracking-tight sm:text-2xl md:text-3xl">
+        <span className="block">{line1}</span>
+        {line2 && <span className="block">{line2}</span>}
       </h2>
 
-      <div ref={ref} className="flex w-full justify-center">
+      <div ref={ref} className="w-full">
         <motion.div
           style={{ scale, opacity }}
-          className="relative aspect-[9/16] w-full max-w-[420px] overflow-hidden rounded-[1.75rem] border border-line-strong shadow-[0_40px_120px_-30px_rgba(107,121,255,0.45)]"
+          className="relative mx-auto aspect-video w-full max-w-[1400px] overflow-hidden rounded-2xl border border-line-strong shadow-[0_50px_140px_-40px_rgba(107,121,255,0.45)]"
         >
           <video
             src="/assets/hero-bg.mp4"
@@ -42,25 +56,21 @@ export function Showreel({ data }: { data: Homepage["showreel"] }) {
             playsInline
             className="absolute inset-0 h-full w-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-bg/40 via-bg/10 to-bg/85" />
+          <div className="absolute inset-0 bg-bg/30" />
 
           <motion.div
-            className="absolute inset-0 flex flex-col items-center justify-center gap-1.5"
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, amount: 0.5 }}
-            variants={{ show: { transition: { staggerChildren: 0.2, delayChildren: 0.2 } } }}
+            style={{ opacity: textOpacity }}
+            className="absolute inset-0 flex items-center justify-center"
           >
-            {WORDS.map((w) => (
-              <motion.span
-                key={w}
-                variants={{ hidden: { opacity: 0, y: 34 }, show: { opacity: 1, y: 0 } }}
-                transition={{ duration: 0.7, ease: EASE_OUT }}
-                className="font-display text-3xl font-bold uppercase tracking-tight text-gradient sm:text-4xl"
-              >
-                {w}
-              </motion.span>
-            ))}
+            <motion.span style={{ x: xLeft }} className={word}>
+              Content
+            </motion.span>
+            <motion.span className={`${word} mx-5 sm:mx-9`}>
+              Technology
+            </motion.span>
+            <motion.span style={{ x: xRight }} className={word}>
+              Space
+            </motion.span>
           </motion.div>
         </motion.div>
       </div>

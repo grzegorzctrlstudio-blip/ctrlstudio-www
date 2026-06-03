@@ -420,9 +420,11 @@ function LogoMark({ input }: { input: Input }) {
 
 function GLBackground({
   styleIndex,
+  showLogo,
   onFail,
 }: {
   styleIndex: number;
+  showLogo: boolean;
   onFail: () => void;
 }) {
   const input = useReactiveInput();
@@ -442,7 +444,7 @@ function GLBackground({
         <Suspense fallback={null}>
           <BgQuad key={styleIndex} urls={urls} depthUrls={depthUrls} input={input} />
           <Dust input={input} />
-          <LogoMark input={input} />
+          {showLogo && <LogoMark input={input} />}
         </Suspense>
       </Canvas>
     </div>
@@ -526,7 +528,13 @@ function webglOk() {
   }
 }
 
-export function SceneBackground({ styleIndex = 0 }: { styleIndex?: number }) {
+export function SceneBackground({
+  styleIndex = 0,
+  showLogo = true,
+}: {
+  styleIndex?: number;
+  showLogo?: boolean;
+}) {
   const [mode, setMode] = useState<"gl" | "dom">("gl");
 
   useEffect(() => {
@@ -534,7 +542,13 @@ export function SceneBackground({ styleIndex = 0 }: { styleIndex?: number }) {
   }, []);
 
   if (mode === "dom") return <DomBackground styleIndex={styleIndex} />;
-  return <GLBackground styleIndex={styleIndex} onFail={() => setMode("dom")} />;
+  return (
+    <GLBackground
+      styleIndex={styleIndex}
+      showLogo={showLogo}
+      onFail={() => setMode("dom")}
+    />
+  );
 }
 
 export default SceneBackground;
