@@ -43,7 +43,8 @@ export function Header() {
   if (
     pathname.startsWith("/demo") ||
     pathname.startsWith("/scroll") ||
-    pathname.startsWith("/tlo")
+    pathname.startsWith("/tlo") ||
+    pathname.startsWith("/logo3d")
   )
     return null;
 

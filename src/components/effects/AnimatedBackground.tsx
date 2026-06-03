@@ -26,7 +26,8 @@ export function AnimatedBackground() {
     !mounted ||
     !wide ||
     pathname.startsWith("/scroll") ||
-    pathname.startsWith("/tlo")
+    pathname.startsWith("/tlo") ||
+    pathname.startsWith("/logo3d")
   )
     return null;
 
