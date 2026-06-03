@@ -29,7 +29,7 @@ const STEPS = [
 ];
 
 export function SceneMockup() {
-  const [styleIndex, setStyleIndex] = useState(0);
+  const [styleIndex, setStyleIndex] = useState(1);
   const [active, setActive] = useState(0);
 
   useEffect(() => {
@@ -85,19 +85,16 @@ export function SceneMockup() {
 
       {/* sections */}
       <main className="relative z-10">
-        {/* 1 — Hero */}
-        <section className="flex min-h-screen flex-col items-center justify-center px-6 text-center">
+        {/* 1 — Hero (the floating chrome logo in the canvas is the focal point) */}
+        <section className="flex min-h-screen flex-col items-center justify-end px-6 pb-28 text-center">
           <p className="eyebrow [text-shadow:0_2px_24px_rgba(0,0,0,0.6)]">
             Creative-technology partner
           </p>
-          <h1 className="display mt-6 max-w-[16ch] text-gradient text-4xl [text-shadow:0_2px_40px_rgba(0,0,0,0.5)] sm:text-6xl md:text-7xl">
-            Visual experiences powered by technology
-          </h1>
-          <p className="lead mt-6 max-w-xl [text-shadow:0_2px_24px_rgba(0,0,0,0.6)]">
+          <p className="lead mt-5 max-w-xl [text-shadow:0_2px_24px_rgba(0,0,0,0.6)]">
             Łączymy content, technologię i przestrzeń w doświadczenia, które
             ożywają w realnym świecie.
           </p>
-          <p className="mt-12 animate-float font-mono text-[0.7rem] uppercase tracking-[0.28em] text-ink-dim">
+          <p className="mt-10 animate-float font-mono text-[0.7rem] uppercase tracking-[0.28em] text-ink-dim">
             ↓ przewiń — tło reaguje
           </p>
         </section>

@@ -7,12 +7,13 @@ import * as THREE from "three";
 /**
  * Full-page reactive background.
  *
- * Primary path = WebGL: a clip-space fullscreen quad (camera-independent, like
- * ShaderBackground) that cross-fades the active style's section images on
- * scroll, with mouse-driven parallax-occlusion depth, chromatic aberration, a
- * cheap bloom, indigo tint, vignette and grain — plus a real 3D dust particle
- * field that parallaxes with the camera. Falls back to a layered DOM version if
- * WebGL is unavailable or the context is lost, so it never shows black.
+ * Primary path = WebGL: a clip-space fullscreen quad (camera-independent) that
+ * cross-fades the active style's section images on scroll, with mouse parallax-
+ * occlusion depth, chromatic aberration, cheap bloom, indigo tint, vignette,
+ * grain and a gentle liquid flow — plus a real 3D dust particle field and a
+ * floating holographic chrome CTRLstudio logo (canvas texture, iridescent
+ * shader sampling a Higgsfield env map for moving reflections). Falls back to a
+ * layered DOM version if WebGL is unavailable or the context is lost.
  */
 
 const STYLES = [
@@ -23,12 +24,13 @@ const STYLES = [
     "/assets/bg/nebula-process.png",
   ],
   [
-    "/assets/bg/chrome-hero.png",
+    "/assets/bg/chrome-hero2.png",
     "/assets/bg/chrome-showreel.png",
     "/assets/bg/chrome-services.png",
     "/assets/bg/chrome-process.png",
   ],
 ];
+const ENV_URL = "/assets/bg/env.png";
 
 const clamp = (v: number, lo: number, hi: number) =>
   Math.min(Math.max(v, lo), hi);
@@ -58,7 +60,9 @@ function useReactiveInput() {
   return ref;
 }
 
-/* ----------------------------------- WebGL --------------------------------- */
+type Input = ReturnType<typeof useReactiveInput>;
+
+/* ------------------------------ background quad ---------------------------- */
 
 const VERT = /* glsl */ `
   varying vec2 vUv;
@@ -102,21 +106,21 @@ const FRAG = /* glsl */ `
   }
 
   void main(){
-    // base framing + gentle idle drift / breathing zoom
     vec2 base = coverUV(vUv);
     vec2 c = (base - 0.5) * (0.94 + 0.01 * sin(uTime * 0.2));
     c += vec2(cos(uTime * 0.05), sin(uTime * 0.04)) * 0.006;
     base = c + 0.5;
 
-    // parallax-occlusion: shift along the mouse vector by local depth (luma)
+    // gentle liquid flow — keeps the scene alive
+    base += vec2(sin(base.y * 9.0 + uTime * 0.5), cos(base.x * 9.0 + uTime * 0.4)) * 0.0022;
+
     vec2 par = uMouse * 0.05;
     float hA = luma(texture2D(uTexA, base).rgb);
     float hB = luma(texture2D(uTexB, base).rgb);
     vec2 uvA = base + par * (hA - 0.5);
     vec2 uvB = base + par * 1.35 * (hB - 0.5);
 
-    // chromatic aberration grows toward the edges
-    vec2 ca = (vUv - 0.5) * 0.0045 + par * 0.0015;
+    vec2 ca = (vUv - 0.5) * 0.003 + par * 0.0012;
 
     vec3 colA = sampleCA(uTexA, uvA, ca);
     vec3 colB = sampleCA(uTexB, uvB, ca);
@@ -128,28 +132,24 @@ const FRAG = /* glsl */ `
     for (int i = 0; i < 8; i++){
       float a = float(i) / 8.0 * 6.2831853;
       vec2 o = vec2(cos(a), sin(a)) * r;
-      vec3 s = texture2D(uTexA, base + o).rgb;
-      bloom += max(s - 0.55, 0.0);
+      bloom += max(texture2D(uTexA, base + o).rgb - 0.55, 0.0);
     }
-    col += bloom * 0.22;
+    col += bloom * 0.25;
 
-    // restrained indigo tint, mostly in the shadows
     vec3 tint = vec3(0.82, 0.85, 1.14);
     float l = luma(col);
     col = mix(col * tint, col, smoothstep(0.25, 0.85, l));
 
-    // vignette + floor fade
     float d = distance(vUv, vec2(0.5));
     col *= 1.0 - smoothstep(0.34, 1.08, d) * 0.82;
 
-    // grain
     col += (hash(vUv * uRes + uTime) - 0.5) * 0.02;
 
     gl_FragColor = vec4(col, 1.0);
   }
 `;
 
-function BgQuad({ urls, input }: { urls: string[]; input: ReturnType<typeof useReactiveInput> }) {
+function BgQuad({ urls, input }: { urls: string[]; input: Input }) {
   const textures = useLoader(THREE.TextureLoader, urls);
   const { size } = useThree();
   const matRef = useRef<THREE.ShaderMaterial>(null);
@@ -187,7 +187,6 @@ function BgQuad({ urls, input }: { urls: string[]; input: ReturnType<typeof useR
     m.uniforms.uTexA.value = textures[a];
     m.uniforms.uTexB.value = textures[b];
     m.uniforms.uMix.value = f - a;
-
     mouse.current.x += (s.mx - mouse.current.x) * 0.05;
     mouse.current.y += (s.my - mouse.current.y) * 0.05;
     m.uniforms.uMouse.value.set(mouse.current.x, mouse.current.y);
@@ -210,13 +209,15 @@ function BgQuad({ urls, input }: { urls: string[]; input: ReturnType<typeof useR
   );
 }
 
-function Dust({ input }: { input: ReturnType<typeof useReactiveInput> }) {
+/* ----------------------------------- dust ---------------------------------- */
+
+function Dust({ input }: { input: Input }) {
   const ref = useRef<THREE.Points>(null);
   const { camera } = useThree();
   const cam = useRef({ x: 0, y: 0 });
 
   const positions = useMemo(() => {
-    const N = 700;
+    const N = 900;
     const arr = new Float32Array(N * 3);
     let seed = 1;
     const rand = () => {
@@ -224,7 +225,7 @@ function Dust({ input }: { input: ReturnType<typeof useReactiveInput> }) {
       return seed / 0x7fffffff;
     };
     for (let i = 0; i < N; i++) {
-      arr[i * 3] = (rand() - 0.5) * 11;
+      arr[i * 3] = (rand() - 0.5) * 12;
       arr[i * 3 + 1] = (rand() - 0.5) * 8;
       arr[i * 3 + 2] = (rand() - 0.5) * 5 - 1;
     }
@@ -234,11 +235,11 @@ function Dust({ input }: { input: ReturnType<typeof useReactiveInput> }) {
   useFrame((_, delta) => {
     const s = input.current;
     if (ref.current) {
-      ref.current.rotation.y += delta * 0.01;
-      ref.current.rotation.z += delta * 0.004;
+      ref.current.rotation.y += delta * 0.014;
+      ref.current.rotation.z += delta * 0.006;
     }
-    cam.current.x += (s.mx * 0.45 - cam.current.x) * 0.04;
-    cam.current.y += (s.my * 0.45 - cam.current.y) * 0.04;
+    cam.current.x += (s.mx * 0.5 - cam.current.x) * 0.04;
+    cam.current.y += (s.my * 0.5 - cam.current.y) * 0.04;
     camera.position.x = cam.current.x;
     camera.position.y = cam.current.y;
     camera.position.z = 5 - s.p * 0.6;
@@ -251,10 +252,10 @@ function Dust({ input }: { input: ReturnType<typeof useReactiveInput> }) {
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
       </bufferGeometry>
       <pointsMaterial
-        size={0.022}
+        size={0.026}
         color="#9aa2ff"
         transparent
-        opacity={0.55}
+        opacity={0.6}
         sizeAttenuation
         depthWrite={false}
         blending={THREE.AdditiveBlending}
@@ -262,6 +263,142 @@ function Dust({ input }: { input: ReturnType<typeof useReactiveInput> }) {
     </points>
   );
 }
+
+/* ------------------------------ holographic logo --------------------------- */
+
+function makeLogoTexture(): THREE.CanvasTexture {
+  const W = 1024;
+  const H = 320;
+  const c = document.createElement("canvas");
+  c.width = W;
+  c.height = H;
+  const ctx = c.getContext("2d")!;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = "#ffffff";
+
+  // CTRL + accent square — centered as one group
+  ctx.font = "800 150px Arial, Helvetica, sans-serif";
+  ctx.textBaseline = "middle";
+  ctx.textAlign = "left";
+  const ctrlW = ctx.measureText("CTRL").width;
+  const sq = 46;
+  const gap = 24;
+  const groupW = sq + gap + ctrlW;
+  const startX = (W - groupW) / 2;
+  const midY = H * 0.42;
+  ctx.fillRect(startX, midY - sq / 2, sq, sq);
+  ctx.fillText("CTRL", startX + sq + gap, midY);
+
+  // STUDIO — smaller, tracked, centered beneath
+  ctx.font = "44px ui-monospace, 'Courier New', monospace";
+  try {
+    (ctx as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing =
+      "18px";
+  } catch {}
+  ctx.textAlign = "center";
+  ctx.fillText("STUDIO", W / 2 + 9, H * 0.78);
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 4;
+  return tex;
+}
+
+const LOGO_FRAG = /* glsl */ `
+  precision highp float;
+  varying vec2 vUv;
+  uniform sampler2D uLogo;
+  uniform sampler2D uEnv;
+  uniform float uTime;
+  uniform vec2 uMouse;
+  uniform float uOpacity;
+
+  void main(){
+    float mask = texture2D(uLogo, vUv).a;
+    if (mask < 0.02) discard;
+
+    // moving reflection from the env map
+    vec2 ruv = vUv * vec2(0.8, 1.6) + uMouse * 0.35 + vec2(uTime * 0.03, uTime * 0.01);
+    vec3 refl = texture2D(uEnv, fract(ruv)).rgb;
+
+    // iridescent hue shift across the mark
+    float h = vUv.x * 0.6 + vUv.y * 0.3 + uTime * 0.06 + uMouse.x * 0.2;
+    vec3 irid = 0.5 + 0.5 * cos(6.2831853 * (vec3(0.0, 0.33, 0.67) + h));
+
+    vec3 chrome = mix(vec3(0.80, 0.84, 0.95), refl * 1.4, 0.55);
+    vec3 col = mix(chrome, irid, 0.16);
+
+    // moving specular sweep
+    float sweep = smoothstep(0.05, 0.0, abs(vUv.x - fract(uTime * 0.12)));
+    col += sweep * 0.5;
+
+    col = clamp(col, 0.0, 1.6);
+    gl_FragColor = vec4(col, mask * uOpacity);
+  }
+`;
+
+function LogoMark({ input }: { input: Input }) {
+  const env = useLoader(THREE.TextureLoader, ENV_URL);
+  const logoTex = useMemo(() => makeLogoTexture(), []);
+  const matRef = useRef<THREE.ShaderMaterial>(null);
+  const meshRef = useRef<THREE.Mesh>(null);
+  const mouse = useRef({ x: 0, y: 0 });
+
+  useEffect(() => {
+    env.colorSpace = THREE.SRGBColorSpace;
+    env.wrapS = THREE.RepeatWrapping;
+    env.wrapT = THREE.RepeatWrapping;
+  }, [env]);
+
+  const uniforms = useMemo(
+    () => ({
+      uLogo: { value: logoTex },
+      uEnv: { value: env },
+      uTime: { value: 0 },
+      uMouse: { value: new THREE.Vector2(0, 0) },
+      uOpacity: { value: 1 },
+    }),
+    [logoTex, env],
+  );
+
+  useFrame((state, delta) => {
+    const s = input.current;
+    mouse.current.x += (s.mx - mouse.current.x) * 0.05;
+    mouse.current.y += (s.my - mouse.current.y) * 0.05;
+    const t = state.clock.elapsedTime;
+    if (matRef.current) {
+      matRef.current.uniforms.uTime.value += Math.min(delta, 0.05);
+      matRef.current.uniforms.uMouse.value.set(mouse.current.x, mouse.current.y);
+      matRef.current.uniforms.uOpacity.value = clamp(
+        1 - s.p * 6.0,
+        0,
+        1,
+      );
+    }
+    if (meshRef.current) {
+      meshRef.current.position.y = 1.5 + Math.sin(t * 0.8) * 0.05;
+      meshRef.current.rotation.y = mouse.current.x * 0.22;
+      meshRef.current.rotation.x = -mouse.current.y * 0.16;
+    }
+  });
+
+  return (
+    <mesh ref={meshRef} position={[0, 1.5, 0]} renderOrder={2}>
+      <planeGeometry args={[1.92, 0.6]} />
+      <shaderMaterial
+        ref={matRef}
+        uniforms={uniforms}
+        vertexShader={VERT}
+        fragmentShader={LOGO_FRAG}
+        transparent
+        depthWrite={false}
+        depthTest={false}
+      />
+    </mesh>
+  );
+}
+
+/* --------------------------------- WebGL root ------------------------------ */
 
 function GLBackground({
   styleIndex,
@@ -286,6 +423,7 @@ function GLBackground({
         <Suspense fallback={null}>
           <BgQuad key={styleIndex} urls={urls} input={input} />
           <Dust input={input} />
+          <LogoMark input={input} />
         </Suspense>
       </Canvas>
     </div>
