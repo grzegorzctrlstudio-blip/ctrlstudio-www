@@ -22,7 +22,7 @@ export function AnimatedBackground() {
 
   useEffect(() => setMounted(true), []);
 
-  if (!mounted || !wide) return null;
+  if (!mounted || !wide || pathname.startsWith("/scroll")) return null;
 
   // Subtle, atmospheric — the lamp hero covers it up top; it only breathes
   // behind the content sections, so keep it calm.

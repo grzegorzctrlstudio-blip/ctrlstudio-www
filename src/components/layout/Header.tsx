@@ -40,7 +40,8 @@ export function Header() {
     };
   }, [open]);
 
-  if (pathname.startsWith("/demo")) return null;
+  if (pathname.startsWith("/demo") || pathname.startsWith("/scroll"))
+    return null;
 
   return (
     <>

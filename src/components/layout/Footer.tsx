@@ -16,7 +16,8 @@ export function Footer() {
     else window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  if (pathname.startsWith("/demo")) return null;
+  if (pathname.startsWith("/demo") || pathname.startsWith("/scroll"))
+    return null;
 
   return (
     <footer className="relative border-t border-line bg-bg">
