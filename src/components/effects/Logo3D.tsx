@@ -4,20 +4,20 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
-import { FontLoader, type Font } from "three/examples/jsm/loaders/FontLoader.js";
-import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry.js";
+import { SVGLoader } from "three/examples/jsm/loaders/SVGLoader.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 /**
  * The "studio" for the 3D logo: a clean cyclorama-style scene with real
  * environment reflections (RoomEnvironment), studio lighting, a calm shader
- * backdrop and mouse-orbit. It renders a Spline/Blender `ctrl-logo.glb` if one
- * is present in /public/assets, otherwise a real extruded-3D chrome stand-in so
- * the lighting/reflections/interaction are visible immediately.
+ * backdrop and mouse-orbit. The logo is the REAL CTRLstudio mark — its outlines
+ * are traced from the brand PNG to an SVG (public/assets/ctrl-logo.svg) and
+ * extruded to genuine 3D geometry here. If a Spline/Blender ctrl-logo.glb is
+ * present it is preferred instead.
  */
 
 const GLB_URL = "/assets/ctrl-logo.glb";
-const FONT_URL = "/fonts/helvetiker_bold.typeface.json";
+const SVG_URL = "/assets/ctrl-logo.svg";
 
 function usePointer() {
   const p = useRef({ x: 0, y: 0, tx: 0, ty: 0 });
@@ -31,13 +31,13 @@ function usePointer() {
   }, []);
   return p;
 }
+type Pointer = ReturnType<typeof usePointer>;
 
 function StudioEnv() {
   const { gl, scene } = useThree();
   useEffect(() => {
     const pmrem = new THREE.PMREMGenerator(gl);
-    const envScene = new RoomEnvironment();
-    const env = pmrem.fromScene(envScene, 0.04);
+    const env = pmrem.fromScene(new RoomEnvironment(), 0.04);
     scene.environment = env.texture;
     return () => {
       env.texture.dispose();
@@ -47,7 +47,6 @@ function StudioEnv() {
   return null;
 }
 
-/* calm dark backdrop — clip-space, camera-independent */
 const BG_VERT = /* glsl */ `
   varying vec2 vUv;
   void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }
@@ -61,16 +60,15 @@ const BG_FRAG = /* glsl */ `
     vec2 p = vUv - 0.5;
     p += uMouse * 0.04;
     float d = length(p);
-    // soft studio sweep: brighter center, deep edges
     vec3 base = vec3(0.035, 0.033, 0.045);
     vec3 glow = vec3(0.10, 0.11, 0.20);
     float g = smoothstep(0.62, 0.0, d) * (0.6 + 0.12 * sin(uTime * 0.3));
     vec3 col = mix(base, glow, g);
-    col *= 1.0 - smoothstep(0.45, 0.95, d) * 0.6; // vignette
+    col *= 1.0 - smoothstep(0.45, 0.95, d) * 0.6;
     gl_FragColor = vec4(col, 1.0);
   }
 `;
-function CalmBackdrop({ pointer }: { pointer: ReturnType<typeof usePointer> }) {
+function CalmBackdrop({ pointer }: { pointer: Pointer }) {
   const matRef = useRef<THREE.ShaderMaterial>(null);
   const m = useRef({ x: 0, y: 0 });
   const uniforms = useMemo(
@@ -99,19 +97,7 @@ function CalmBackdrop({ pointer }: { pointer: ReturnType<typeof usePointer> }) {
   );
 }
 
-function chromeMaterial() {
-  return new THREE.MeshStandardMaterial({
-    color: new THREE.Color("#e4e8f2"),
-    metalness: 1,
-    roughness: 0.16,
-    envMapIntensity: 1.25,
-  });
-}
-
-function useMouseRig(
-  ref: React.RefObject<THREE.Object3D | null>,
-  pointer: ReturnType<typeof usePointer>,
-) {
+function useMouseRig(ref: React.RefObject<THREE.Object3D | null>, pointer: Pointer) {
   const e = useRef({ x: 0, y: 0 });
   useFrame((state) => {
     const o = ref.current;
@@ -125,80 +111,64 @@ function useMouseRig(
   });
 }
 
-function ExtrudedLogo({ pointer }: { pointer: ReturnType<typeof usePointer> }) {
-  const font = useLoader(FontLoader, FONT_URL) as unknown as Font;
+function chromeMaterial() {
+  return new THREE.MeshStandardMaterial({
+    color: new THREE.Color("#e6eaf3"),
+    metalness: 1,
+    roughness: 0.15,
+    envMapIntensity: 1.3,
+    side: THREE.DoubleSide,
+  });
+}
+
+function SvgLogo({ pointer }: { pointer: Pointer }) {
+  const data = useLoader(SVGLoader, SVG_URL);
   const { viewport } = useThree();
   const group = useRef<THREE.Group>(null);
   useMouseRig(group, pointer);
 
-  const { ctrl, studio, width } = useMemo(() => {
-    const mk = (text: string, size: number, depth: number) => {
-      const g = new TextGeometry(text, {
-        font,
-        size,
-        depth,
-        curveSegments: 8,
-        bevelEnabled: true,
-        bevelThickness: depth * 0.18,
-        bevelSize: size * 0.025,
-        bevelSegments: 4,
-      } as ConstructorParameters<typeof TextGeometry>[1]);
-      g.computeBoundingBox();
-      g.center();
-      const w = g.boundingBox ? g.boundingBox.max.x - g.boundingBox.min.x : 1;
-      return { geo: g, w };
-    };
-    const ctrl = mk("CTRL", 1.3, 0.42);
-    const studio = mk("STUDIO", 0.34, 0.12);
-    return { ctrl, studio, width: ctrl.w + 1.1 };
-  }, [font]);
+  const { geo, width } = useMemo(() => {
+    const shapes: THREE.Shape[] = [];
+    for (const path of data.paths) {
+      for (const s of SVGLoader.createShapes(path)) shapes.push(s);
+    }
+    const g = new THREE.ExtrudeGeometry(shapes, {
+      depth: 220,
+      bevelEnabled: true,
+      bevelThickness: 28,
+      bevelSize: 16,
+      bevelSegments: 3,
+      curveSegments: 6,
+    });
+    g.computeBoundingBox();
+    g.center();
+    const bb = g.boundingBox!;
+    return { geo: g, width: bb.max.x - bb.min.x };
+  }, [data]);
+
+  const mat = useMemo(chromeMaterial, []);
 
   useFrame(() => {
     if (!group.current) return;
-    const target = viewport.width * 0.74;
-    const s = Math.min(target / width, 1.15);
-    group.current.scale.setScalar(s);
+    const target = viewport.width * 0.62;
+    const s = target / width;
+    group.current.scale.set(s, -s, s); // flip Y (SVG is y-down)
   });
-
-  const mat = useMemo(chromeMaterial, []);
-  const accentMat = useMemo(
-    () =>
-      new THREE.MeshStandardMaterial({
-        color: new THREE.Color("#6b79ff"),
-        metalness: 0.7,
-        roughness: 0.25,
-        emissive: new THREE.Color("#2b34a8"),
-        emissiveIntensity: 0.4,
-        envMapIntensity: 1,
-      }),
-    [],
-  );
 
   return (
     <group ref={group}>
-      <mesh geometry={ctrl.geo} material={mat} position={[0.45, 0.25, 0]} />
-      <mesh
-        geometry={studio.geo}
-        material={mat}
-        position={[0.45, -0.85, 0]}
-      />
-      <mesh
-        material={accentMat}
-        position={[-ctrl.w / 2 - 0.05, 0.25, 0]}
-      >
-        <boxGeometry args={[0.5, 0.5, 0.4]} />
-      </mesh>
+      <mesh geometry={geo} material={mat} />
     </group>
   );
 }
 
-function GlbLogo({ pointer }: { pointer: ReturnType<typeof usePointer> }) {
+function GlbLogo({ pointer }: { pointer: Pointer }) {
   const gltf = useLoader(GLTFLoader, GLB_URL);
   const { viewport } = useThree();
   const group = useRef<THREE.Group>(null);
   useMouseRig(group, pointer);
 
-  const scene = useMemo(() => {
+  const model = useMemo(() => {
     const s = gltf.scene.clone(true);
     const box = new THREE.Box3().setFromObject(s);
     const size = new THREE.Vector3();
@@ -212,17 +182,17 @@ function GlbLogo({ pointer }: { pointer: ReturnType<typeof usePointer> }) {
   useFrame(() => {
     if (!group.current) return;
     const target = viewport.width * 0.6;
-    group.current.scale.setScalar(Math.min(target / scene.w, 2));
+    group.current.scale.setScalar(Math.min(target / model.w, 2));
   });
 
   return (
     <group ref={group}>
-      <primitive object={scene.s} />
+      <primitive object={model.s} />
     </group>
   );
 }
 
-function Scene({ glb, pointer }: { glb: boolean; pointer: ReturnType<typeof usePointer> }) {
+function Scene({ glb, pointer }: { glb: boolean; pointer: Pointer }) {
   return (
     <>
       <StudioEnv />
@@ -232,7 +202,7 @@ function Scene({ glb, pointer }: { glb: boolean; pointer: ReturnType<typeof useP
       <directionalLight position={[-5, -1, 2]} intensity={0.7} color="#b06bff" />
       <pointLight position={[0, 1, 5]} intensity={1.2} color="#9aa6ff" />
       <Suspense fallback={null}>
-        {glb ? <GlbLogo pointer={pointer} /> : <ExtrudedLogo pointer={pointer} />}
+        {glb ? <GlbLogo pointer={pointer} /> : <SvgLogo pointer={pointer} />}
       </Suspense>
     </>
   );
