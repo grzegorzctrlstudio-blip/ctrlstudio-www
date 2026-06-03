@@ -17,7 +17,14 @@ export const service = defineType({
       name: "description",
       title: "Opis",
       type: "text",
-      rows: 3,
+      rows: 4,
+    }),
+    defineField({
+      name: "tags",
+      title: "Tagi / przykłady",
+      type: "array",
+      of: [{ type: "string" }],
+      options: { layout: "tags" },
     }),
     defineField({
       name: "visual",

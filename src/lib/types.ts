@@ -47,8 +47,9 @@ export interface Service {
   id: string;
   index: string; // "01"
   title: string;
-  scope: string; // short, distinguishing line
+  scope?: string; // optional short line
   description: string;
+  tags?: string[]; // small example chips
   visual: ServiceVisual;
 }
 

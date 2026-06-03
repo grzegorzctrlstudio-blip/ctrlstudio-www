@@ -18,8 +18,8 @@ export function Services({ services }: { services: Service[] }) {
       <div className="container-x flex flex-col gap-16">
         <SectionHeading
           eyebrow="Co robimy"
-          title="Cztery filary CTRLstudio"
-          intro="Cztery sposoby, w jakie łączymy content, technologię i przestrzeń — każdy z osobnym zadaniem i własnym charakterem."
+          title="Content, interakcja i technologia dla eventów, targów i przestrzeni."
+          intro="Tworzymy animacje, aplikacje interaktywne i obsługujemy systemy multimedialne, które pozwalają markom działać efektownie na scenie, stoisku, wystawie albo w stałej instalacji."
         />
 
         <div className="flex flex-col gap-20 lg:gap-28">
@@ -41,12 +41,26 @@ function ServiceRow({ service, flip }: { service: Service; flip: boolean }) {
             {service.index}
           </span>
           <h3 className="display-lg text-ink">{service.title}</h3>
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-accent-ink">
-            {service.scope}
-          </p>
+          {service.scope && (
+            <p className="font-mono text-xs uppercase tracking-[0.2em] text-accent-ink">
+              {service.scope}
+            </p>
+          )}
           <p className="max-w-xl text-base leading-relaxed text-ink-dim">
             {service.description}
           </p>
+          {service.tags && service.tags.length > 0 && (
+            <ul className="flex max-w-xl flex-wrap gap-2 pt-1">
+              {service.tags.map((tag) => (
+                <li
+                  key={tag}
+                  className="rounded-full border border-line bg-bg-raised/40 px-3 py-1.5 text-xs text-ink-dim transition-colors hover:border-line-strong hover:text-ink"
+                >
+                  {tag}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </Reveal>
 
