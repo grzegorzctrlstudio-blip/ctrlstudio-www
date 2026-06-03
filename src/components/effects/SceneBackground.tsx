@@ -31,6 +31,9 @@ const STYLES = [
   ],
 ];
 const ENV_URL = "/assets/bg/env.png";
+const DEPTH_STYLES = STYLES.map((arr) =>
+  arr.map((u) => u.replace(".png", "-depth.png")),
+);
 
 const clamp = (v: number, lo: number, hi: number) =>
   Math.min(Math.max(v, lo), hi);
@@ -78,6 +81,8 @@ const FRAG = /* glsl */ `
 
   uniform sampler2D uTexA;
   uniform sampler2D uTexB;
+  uniform sampler2D uDepthA;
+  uniform sampler2D uDepthB;
   uniform float uMix;
   uniform vec2 uMouse;
   uniform float uTime;
@@ -114,11 +119,12 @@ const FRAG = /* glsl */ `
     // gentle liquid flow — keeps the scene alive
     base += vec2(sin(base.y * 9.0 + uTime * 0.5), cos(base.x * 9.0 + uTime * 0.4)) * 0.0022;
 
-    vec2 par = uMouse * 0.05;
-    float hA = luma(texture2D(uTexA, base).rgb);
-    float hB = luma(texture2D(uTexB, base).rgb);
+    // real depth-map parallax-occlusion (white = near → moves more)
+    vec2 par = uMouse * 0.09;
+    float hA = texture2D(uDepthA, base).r;
+    float hB = texture2D(uDepthB, base).r;
     vec2 uvA = base + par * (hA - 0.5);
-    vec2 uvB = base + par * 1.35 * (hB - 0.5);
+    vec2 uvB = base + par * (hB - 0.5);
 
     vec2 ca = (vUv - 0.5) * 0.003 + par * 0.0012;
 
@@ -149,8 +155,16 @@ const FRAG = /* glsl */ `
   }
 `;
 
-function BgQuad({ urls, input }: { urls: string[]; input: Input }) {
-  const textures = useLoader(THREE.TextureLoader, urls);
+function BgQuad({
+  urls,
+  depthUrls,
+  input,
+}: {
+  urls: string[];
+  depthUrls: string[];
+  input: Input;
+}) {
+  const textures = useLoader(THREE.TextureLoader, [...urls, ...depthUrls]);
   const { size } = useThree();
   const matRef = useRef<THREE.ShaderMaterial>(null);
   const mouse = useRef({ x: 0, y: 0 });
@@ -168,6 +182,8 @@ function BgQuad({ urls, input }: { urls: string[]; input: Input }) {
     () => ({
       uTexA: { value: null as THREE.Texture | null },
       uTexB: { value: null as THREE.Texture | null },
+      uDepthA: { value: null as THREE.Texture | null },
+      uDepthB: { value: null as THREE.Texture | null },
       uMix: { value: 0 },
       uMouse: { value: new THREE.Vector2(0, 0) },
       uTime: { value: 0 },
@@ -180,12 +196,14 @@ function BgQuad({ urls, input }: { urls: string[]; input: Input }) {
     const m = matRef.current;
     if (!m) return;
     const s = input.current;
-    const n = textures.length;
+    const n = urls.length;
     const f = s.p * (n - 1);
     const a = Math.min(Math.floor(f), n - 1);
     const b = Math.min(a + 1, n - 1);
     m.uniforms.uTexA.value = textures[a];
     m.uniforms.uTexB.value = textures[b];
+    m.uniforms.uDepthA.value = textures[n + a];
+    m.uniforms.uDepthB.value = textures[n + b];
     m.uniforms.uMix.value = f - a;
     mouse.current.x += (s.mx - mouse.current.x) * 0.05;
     mouse.current.y += (s.my - mouse.current.y) * 0.05;
@@ -409,6 +427,7 @@ function GLBackground({
 }) {
   const input = useReactiveInput();
   const urls = STYLES[styleIndex] ?? STYLES[0];
+  const depthUrls = DEPTH_STYLES[styleIndex] ?? DEPTH_STYLES[0];
   return (
     <div className="pointer-events-none fixed inset-0 z-0 bg-bg" aria-hidden>
       <Canvas
@@ -421,7 +440,7 @@ function GLBackground({
         }}
       >
         <Suspense fallback={null}>
-          <BgQuad key={styleIndex} urls={urls} input={input} />
+          <BgQuad key={styleIndex} urls={urls} depthUrls={depthUrls} input={input} />
           <Dust input={input} />
           <LogoMark input={input} />
         </Suspense>
