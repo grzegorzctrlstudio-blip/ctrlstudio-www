@@ -17,19 +17,11 @@ export function Showreel({ data }: { data: Homepage["showreel"] }) {
     offset: ["start start", "end end"],
   });
 
-  // window appears fast
-  const scale = useTransform(scrollYProgress, [0, 0.18], [0.55, 1]);
-  const radius = useTransform(scrollYProgress, [0, 0.18], [22, 12]);
-
-  // top words: reveal + grow to fill the band
-  const topOpacity = useTransform(scrollYProgress, [0.18, 0.4], [0, 1]);
-  const topScale = useTransform(scrollYProgress, [0.18, 0.62], [0.65, 1]);
-  const topY = useTransform(scrollYProgress, [0.18, 0.4], [40, 0]);
-
-  // bottom heading: reveal + grow to fill the band
-  const botOpacity = useTransform(scrollYProgress, [0.26, 0.5], [0, 1]);
-  const botScale = useTransform(scrollYProgress, [0.26, 0.66], [0.65, 1]);
-  const botY = useTransform(scrollYProgress, [0.26, 0.5], [40, 0]);
+  // screen + texts grow TOGETHER (same scale), centered
+  const scale = useTransform(scrollYProgress, [0, 0.22], [0.5, 1]);
+  const radius = useTransform(scrollYProgress, [0, 0.22], [22, 12]);
+  const topOpacity = useTransform(scrollYProgress, [0.02, 0.2], [0, 1]);
+  const botOpacity = useTransform(scrollYProgress, [0.06, 0.24], [0, 1]);
 
   // two-line bottom text
   const t = data.text;
@@ -48,7 +40,7 @@ export function Showreel({ data }: { data: Homepage["showreel"] }) {
       <div className="sticky top-0 flex h-[100svh] flex-col items-center overflow-hidden px-4">
         {/* TOP band */}
         <motion.div
-          style={{ opacity: topOpacity, scale: topScale, y: topY }}
+          style={{ opacity: topOpacity, scale }}
           className="flex flex-[0.85] items-center justify-center gap-4 text-center sm:gap-10"
         >
           <span className={topWord}>Content</span>
@@ -74,7 +66,7 @@ export function Showreel({ data }: { data: Homepage["showreel"] }) {
 
         {/* BOTTOM band */}
         <motion.div
-          style={{ opacity: botOpacity, scale: botScale, y: botY }}
+          style={{ opacity: botOpacity, scale }}
           className="flex flex-[1.15] items-center justify-center"
         >
           <h2 className="display text-center text-gradient text-base leading-[1.06] sm:text-2xl md:text-4xl lg:text-5xl">
