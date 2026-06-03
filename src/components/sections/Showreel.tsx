@@ -5,12 +5,10 @@ import { motion, useScroll, useTransform } from "motion/react";
 import type { Homepage } from "@/lib/types";
 
 /**
- * Showreel scroll choreography (pinned stage):
- * 1. the 16:9 window scales in fast (small → full),
- * 2. CONTENT / TECHNOLOGY / SPACE reveal ABOVE the window (masked slide-up),
- *    and the big "Zobacz…" line reveals BELOW it,
- * 3. on further scroll CONTENT/SPACE spread apart and the middle word
- *    (TECHNOLOGY) fades out.
+ * Showreel (pinned stage), vertical layout that fills the screen:
+ *   [ CONTENT · TECHNOLOGY · SPACE ]   ← top band, scales up to fill
+ *   [        16:9 window        ]      ← appears fast, sits high
+ *   [   Zobacz… (2 lines)        ]      ← bottom band, scales up to fill
  */
 export function Showreel({ data }: { data: Homepage["showreel"] }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -19,56 +17,49 @@ export function Showreel({ data }: { data: Homepage["showreel"] }) {
     offset: ["start start", "end end"],
   });
 
-  // window scales in quickly
-  const scale = useTransform(scrollYProgress, [0, 0.26], [0.55, 1]);
-  const radius = useTransform(scrollYProgress, [0, 0.26], [24, 12]);
+  // window appears fast
+  const scale = useTransform(scrollYProgress, [0, 0.18], [0.55, 1]);
+  const radius = useTransform(scrollYProgress, [0, 0.18], [22, 12]);
 
-  // masked reveal of the words above
-  const yC = useTransform(scrollYProgress, [0.3, 0.44], ["120%", "0%"]);
-  const yT = useTransform(scrollYProgress, [0.35, 0.49], ["120%", "0%"]);
-  const yS = useTransform(scrollYProgress, [0.4, 0.54], ["120%", "0%"]);
-  const oC = useTransform(scrollYProgress, [0.3, 0.44], [0, 1]);
-  const oS = useTransform(scrollYProgress, [0.4, 0.54], [0, 1]);
-  // middle word reveals then disappears
-  const oT = useTransform(scrollYProgress, [0.35, 0.49, 0.64, 0.82], [0, 1, 1, 0]);
+  // top words: reveal + grow to fill the band
+  const topOpacity = useTransform(scrollYProgress, [0.18, 0.4], [0, 1]);
+  const topScale = useTransform(scrollYProgress, [0.18, 0.62], [0.65, 1]);
+  const topY = useTransform(scrollYProgress, [0.18, 0.4], [40, 0]);
 
-  // outer words spread apart on further scroll
-  const xC = useTransform(scrollYProgress, [0.56, 0.88], ["0vw", "-17vw"]);
-  const xS = useTransform(scrollYProgress, [0.56, 0.88], ["0vw", "17vw"]);
+  // bottom heading: reveal + grow to fill the band
+  const botOpacity = useTransform(scrollYProgress, [0.26, 0.5], [0, 1]);
+  const botScale = useTransform(scrollYProgress, [0.26, 0.66], [0.65, 1]);
+  const botY = useTransform(scrollYProgress, [0.26, 0.5], [40, 0]);
 
-  // big "Zobacz…" below
-  const zOpacity = useTransform(scrollYProgress, [0.34, 0.54], [0, 1]);
-  const zY = useTransform(scrollYProgress, [0.34, 0.54], [28, 0]);
+  // two-line bottom text
+  const t = data.text;
+  const cut = (() => {
+    const i = t.indexOf(" ", Math.floor(t.length / 2) - 6);
+    return i < 0 ? t.length : i;
+  })();
+  const line1 = t.slice(0, cut);
+  const line2 = t.slice(cut + 1);
 
-  const word =
-    "block font-display text-2xl font-bold uppercase tracking-tight text-gradient sm:text-4xl md:text-5xl";
+  const topWord =
+    "font-display text-3xl font-bold uppercase tracking-tight text-gradient sm:text-5xl md:text-6xl lg:text-7xl";
 
   return (
-    <section ref={ref} id="showreel" className="relative h-[220vh]">
-      <div className="sticky top-0 flex h-[100svh] flex-col items-center justify-center gap-6 overflow-hidden px-4 md:gap-8">
-        {/* words ABOVE the window */}
-        <div className="flex items-center justify-center gap-4 sm:gap-8">
-          <motion.span style={{ x: xC }} className="inline-block overflow-hidden py-1">
-            <motion.span style={{ y: yC, opacity: oC }} className={word}>
-              Content
-            </motion.span>
-          </motion.span>
-          <span className="inline-block overflow-hidden py-1">
-            <motion.span style={{ y: yT, opacity: oT }} className={word}>
-              Technology
-            </motion.span>
-          </span>
-          <motion.span style={{ x: xS }} className="inline-block overflow-hidden py-1">
-            <motion.span style={{ y: yS, opacity: oS }} className={word}>
-              Space
-            </motion.span>
-          </motion.span>
-        </div>
+    <section ref={ref} id="showreel" className="relative h-[200vh]">
+      <div className="sticky top-0 flex h-[100svh] flex-col items-center overflow-hidden px-4">
+        {/* TOP band */}
+        <motion.div
+          style={{ opacity: topOpacity, scale: topScale, y: topY }}
+          className="flex flex-[0.85] items-center justify-center gap-4 text-center sm:gap-10"
+        >
+          <span className={topWord}>Content</span>
+          <span className={topWord}>Technology</span>
+          <span className={topWord}>Space</span>
+        </motion.div>
 
-        {/* the 16:9 window */}
+        {/* 16:9 window */}
         <motion.div
           style={{ scale, borderRadius: radius }}
-          className="relative aspect-video max-h-[46svh] w-full max-w-[1200px] overflow-hidden border border-line-strong shadow-[0_60px_160px_-40px_rgba(107,121,255,0.5)]"
+          className="relative aspect-video max-h-[40svh] w-full max-w-[1180px] shrink-0 overflow-hidden border border-line-strong shadow-[0_60px_160px_-40px_rgba(107,121,255,0.5)]"
         >
           <video
             src="/assets/hero-bg.mp4"
@@ -81,13 +72,16 @@ export function Showreel({ data }: { data: Homepage["showreel"] }) {
           <div className="absolute inset-0 bg-bg/25" />
         </motion.div>
 
-        {/* big "Zobacz…" BELOW the window */}
-        <motion.h2
-          style={{ opacity: zOpacity, y: zY }}
-          className="display-lg max-w-[22ch] text-center text-balance"
+        {/* BOTTOM band */}
+        <motion.div
+          style={{ opacity: botOpacity, scale: botScale, y: botY }}
+          className="flex flex-[1.15] items-center justify-center"
         >
-          {data.text}
-        </motion.h2>
+          <h2 className="display text-center text-gradient text-base leading-[1.06] sm:text-2xl md:text-4xl lg:text-5xl">
+            <span className="block whitespace-nowrap">{line1}</span>
+            {line2 && <span className="block whitespace-nowrap">{line2}</span>}
+          </h2>
+        </motion.div>
       </div>
     </section>
   );
