@@ -9,11 +9,12 @@ import {
   MeshReflectorMaterial,
   MeshTransmissionMaterial,
 } from "@react-three/drei";
+import { Bloom, EffectComposer } from "@react-three/postprocessing";
 import { SVGLoader } from "three/examples/jsm/loaders/SVGLoader.js";
 import * as THREE from "three";
 import { useMouseRef, type MouseRef } from "@/components/demo/demoCommon";
 
-const GLASS_BG = new THREE.Color("#0a1228");
+const GLASS_BG = new THREE.Color("#172a4d");
 
 /** The CTRL logo, extruded from its outline into a 3D glass model with an
  *  iridescent / chromatic effect that refracts the glowing particles behind. */
@@ -46,31 +47,31 @@ function GlassLogo({ mouse }: { mouse: MouseRef }) {
     g.position.y = 0.15 + Math.sin(t * 0.5) * 0.07;
   });
 
-  const s = 0.0044;
+  const s = 0.0039;
   return (
-    <group ref={group} position={[0, 0.15, 0]}>
+    <group ref={group} position={[0, 0.25, 0]}>
       <mesh geometry={geometry} rotation={[Math.PI, 0, 0]} scale={[s, s, s]}>
         <MeshTransmissionMaterial
           background={GLASS_BG}
           samples={10}
-          resolution={384}
+          resolution={512}
           transmission={1}
           roughness={0}
-          thickness={0.7}
-          ior={1.42}
-          chromaticAberration={0.07}
-          anisotropy={0}
+          thickness={0.4}
+          ior={1.48}
+          chromaticAberration={0.06}
+          anisotropy={0.1}
           distortion={0}
           distortionScale={0}
           temporalDistortion={0}
-          iridescence={1}
+          iridescence={0.7}
           iridescenceIOR={1.3}
-          iridescenceThicknessRange={[100, 460]}
+          iridescenceThicknessRange={[120, 500]}
           clearcoat={1}
-          clearcoatRoughness={0.05}
-          attenuationDistance={2.5}
-          attenuationColor="#bcd4ff"
-          color="#eaf1ff"
+          clearcoatRoughness={0.04}
+          attenuationDistance={6}
+          attenuationColor="#e3edff"
+          color="#ffffff"
         />
       </mesh>
     </group>
@@ -135,13 +136,14 @@ export function DemoSceneD() {
       camera={{ position: [0, 0.3, 6], fov: 42 }}
       gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
     >
-      <ambientLight intensity={0.35} />
-      <directionalLight position={[5, 6, 5]} intensity={1.1} />
-      <Environment resolution={96}>
-        <Lightformer position={[0, 4, 3]} scale={8} intensity={3} color="#cfe2ff" />
-        <Lightformer position={[-4, 1, 2]} scale={5} intensity={2} color="#6ea8ff" />
-        <Lightformer position={[4, -1, 3]} scale={5} intensity={1.6} color="#9cdcff" />
-        <Lightformer position={[0, -3, 2]} scale={6} intensity={1} color="#3b5bbf" />
+      <ambientLight intensity={0.5} />
+      <directionalLight position={[5, 6, 5]} intensity={1.2} />
+      {/* bright emissive studio (no network) → strong reflections on the glass */}
+      <Environment resolution={128}>
+        <Lightformer form="rect" position={[0, 4, 4]} scale={[10, 6, 1]} intensity={6} color="#eaf4ff" />
+        <Lightformer form="rect" position={[-5, 1, 3]} scale={[5, 8, 1]} intensity={4} color="#88b8ff" />
+        <Lightformer form="rect" position={[5, 0, 3]} scale={[5, 8, 1]} intensity={4} color="#bfe6ff" />
+        <Lightformer form="ring" position={[0, -2, 4]} scale={4} intensity={3} color="#6a86ff" />
       </Environment>
 
       <ParticleCloud mouse={mouse} />
@@ -174,6 +176,15 @@ export function DemoSceneD() {
         far={5}
         color="#000010"
       />
+
+      <EffectComposer>
+        <Bloom
+          mipmapBlur
+          luminanceThreshold={0.45}
+          luminanceSmoothing={0.3}
+          intensity={1.15}
+        />
+      </EffectComposer>
     </Canvas>
   );
 }
