@@ -3,7 +3,6 @@
 import type { Cta } from "@/lib/types";
 import { Hero as LampHero } from "@/components/ui/lamp-hero";
 import { ParticleBackground } from "@/components/effects/ParticleBackground";
-import { MouseLight } from "@/components/effects/MouseLight";
 
 interface HeroProps {
   headline: string;
@@ -17,8 +16,17 @@ export function Hero({ headline, subtext, ctas }: HeroProps) {
       className="min-h-svh"
       fx={
         <>
-          <MouseLight size="44rem" intensity={0.22} />
-          <ParticleBackground density={0.9} />
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="absolute inset-0 h-full w-full object-cover opacity-45"
+          >
+            <source src="/assets/hero-bg.mp4" type="video/mp4" />
+          </video>
+          <div className="absolute inset-0 bg-gradient-to-b from-bg/65 via-bg/45 to-bg" />
+          <ParticleBackground density={0.8} />
         </>
       }
       title={headline}
