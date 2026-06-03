@@ -3,8 +3,14 @@ import { cn } from "@/lib/utils";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Reveal } from "@/components/ui/Reveal";
 import { Parallax } from "@/components/effects/Parallax";
-import { ParticleBackground } from "@/components/effects/ParticleBackground";
-import { MouseLight } from "@/components/effects/MouseLight";
+import { ServiceIcon } from "@/components/sections/ServiceIcon";
+
+const ICON: Record<ServiceVisual, string> = {
+  experience: "/assets/icons/experiences.png",
+  scenography: "/assets/icons/scenography.png",
+  interactive: "/assets/icons/interactive.png",
+  product: "/assets/icons/product.png",
+};
 
 export function Services({ services }: { services: Service[] }) {
   return (
@@ -46,71 +52,9 @@ function ServiceRow({ service, flip }: { service: Service; flip: boolean }) {
 
       <Reveal delay={0.1} className={cn(flip && "lg:order-1")}>
         <Parallax distance={26}>
-          <ServiceVisualBlock visual={service.visual} />
+          <ServiceIcon src={ICON[service.visual]} alt={service.title} />
         </Parallax>
       </Reveal>
-    </div>
-  );
-}
-
-/** Each service gets a deliberately distinct visual treatment. */
-function ServiceVisualBlock({ visual }: { visual: ServiceVisual }) {
-  return (
-    <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-line bg-bg-raised">
-      {visual === "experience" && (
-        <>
-          <ParticleBackground density={0.5} />
-          <div className="absolute inset-0 glow opacity-50" />
-          <div className="absolute inset-0 grid-field opacity-25" />
-        </>
-      )}
-
-      {visual === "scenography" && (
-        <>
-          <div className="absolute inset-0 [perspective:1100px]">
-            {[0, 1, 2].map((n) => (
-              <div
-                key={n}
-                className="absolute border border-line-strong bg-gradient-to-br from-accent/12 to-transparent"
-                style={{
-                  inset: `${14 + n * 6}% ${20 + n * 8}%`,
-                  transform: `rotateY(-24deg) translateZ(${n * 30}px)`,
-                }}
-              />
-            ))}
-          </div>
-          {/* stage floor + light */}
-          <div className="absolute inset-x-0 bottom-0 h-2/5 grid-field opacity-40 [mask-image:linear-gradient(to_top,#000,transparent)]" />
-          <div className="absolute -top-10 left-1/2 h-40 w-40 -translate-x-1/2 rounded-full bg-accent/20 blur-3xl" />
-        </>
-      )}
-
-      {visual === "interactive" && (
-        <>
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage:
-                "radial-gradient(circle, var(--line-strong) 1.2px, transparent 1.6px)",
-              backgroundSize: "22px 22px",
-            }}
-          />
-          <MouseLight size="18rem" intensity={0.3} />
-          <div className="absolute inset-0 [mask-image:radial-gradient(circle_at_center,#000,transparent_75%)]" />
-        </>
-      )}
-
-      {visual === "product" && (
-        <div className="absolute inset-0 grid place-items-center">
-          <div className="absolute inset-0 glow opacity-50" />
-          <div className="relative h-3/5 w-3/5">
-            <div className="absolute inset-0 animate-spin-slow rounded-full border border-line-strong" />
-            <div className="absolute inset-[14%] animate-spin-slow-rev rounded-full border border-accent/40" />
-            <div className="absolute inset-[30%] rotate-45 animate-spin-slow border border-line-strong bg-bg-elevated/50 backdrop-blur-sm" />
-            <div className="absolute inset-[42%] rounded-full bg-accent/30 blur-md" />
-          </div>
-        </div>
-      )}
     </div>
   );
 }
