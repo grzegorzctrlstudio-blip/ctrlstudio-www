@@ -116,11 +116,11 @@ const FRAG = /* glsl */ `
     c += vec2(cos(uTime * 0.05), sin(uTime * 0.04)) * 0.006;
     base = c + 0.5;
 
-    // gentle liquid flow — keeps the scene alive
-    base += vec2(sin(base.y * 9.0 + uTime * 0.5), cos(base.x * 9.0 + uTime * 0.4)) * 0.0022;
+    // liquid flow — keeps the scene alive
+    base += vec2(sin(base.y * 9.0 + uTime * 0.5), cos(base.x * 9.0 + uTime * 0.4)) * 0.004;
 
     // real depth-map parallax-occlusion (white = near → moves more)
-    vec2 par = uMouse * 0.09;
+    vec2 par = uMouse * 0.17;
     float hA = texture2D(uDepthA, base).r;
     float hB = texture2D(uDepthB, base).r;
     vec2 uvA = base + par * (hA - 0.5);
@@ -147,7 +147,7 @@ const FRAG = /* glsl */ `
     col = mix(col * tint, col, smoothstep(0.25, 0.85, l));
 
     float d = distance(vUv, vec2(0.5));
-    col *= 1.0 - smoothstep(0.34, 1.08, d) * 0.82;
+    col *= 1.0 - smoothstep(0.42, 1.14, d) * 0.6;
 
     col += (hash(vUv * uRes + uTime) - 0.5) * 0.02;
 

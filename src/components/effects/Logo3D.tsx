@@ -138,7 +138,8 @@ function SvgLogo({ pointer, fadeRef, scaleFactor, lift }: LogoProps) {
   const data = useLoader(SVGLoader, SVG_URL);
   const { viewport } = useThree();
   const inner = useRef<THREE.Group>(null);
-  useMouseRig(inner, pointer);
+  const mouse = useRef({ x: 0, y: 0 });
+  const t0 = useRef<number | null>(null);
 
   const { geo, width } = useMemo(() => {
     const shapes: THREE.Shape[] = [];
@@ -161,10 +162,25 @@ function SvgLogo({ pointer, fadeRef, scaleFactor, lift }: LogoProps) {
 
   const mat = useMemo(chromeMaterial, []);
 
-  useFrame(() => {
+  useFrame((state) => {
     if (!inner.current) return;
-    const s = (viewport.width * scaleFactor) / width;
+    const t = state.clock.elapsedTime;
+    if (t0.current === null) t0.current = t;
+    const intro = Math.min(1, (t - t0.current) / 1.3);
+    const ease = 1 - Math.pow(1 - intro, 3); // easeOutCubic — logo grows + spins in
+
+    const s = ((viewport.width * scaleFactor) / width) * ease;
     inner.current.scale.set(s, -s, s);
+
+    mouse.current.x += (pointer.current.tx - mouse.current.x) * 0.06;
+    mouse.current.y += (pointer.current.ty - mouse.current.y) * 0.06;
+    inner.current.rotation.y =
+      (1 - ease) * -Math.PI * 0.6 +
+      mouse.current.x * 0.5 +
+      Math.sin(t * 0.35) * 0.18;
+    inner.current.rotation.x = -mouse.current.y * 0.26 + Math.sin(t * 0.5) * 0.04;
+    inner.current.position.y = Math.sin(t * 0.8) * 0.05;
+
     const fade = fadeRef.current;
     mat.opacity = fade;
     mat.transparent = fade < 0.999;
@@ -231,17 +247,19 @@ function Scene({
   fadeRef,
   scaleFactor,
   lift,
+  transparent,
 }: {
   glb: boolean;
   pointer: Pointer;
   fadeRef: FadeRef;
   scaleFactor: number;
   lift: number;
+  transparent: boolean;
 }) {
   return (
     <>
       <StudioEnv />
-      <CalmBackdrop pointer={pointer} />
+      {!transparent && <CalmBackdrop pointer={pointer} />}
       <ambientLight intensity={0.35} />
       <directionalLight position={[4, 5, 6]} intensity={2.2} />
       <directionalLight position={[-5, -1, 2]} intensity={0.7} color="#b06bff" />
@@ -262,11 +280,13 @@ export function Logo3D({
   className = "pointer-events-none fixed inset-0 z-0 bg-bg",
   scaleFactor = 0.62,
   lift = 0,
+  transparent = false,
 }: {
   fade?: number;
   className?: string;
   scaleFactor?: number;
   lift?: number;
+  transparent?: boolean;
 }) {
   const pointer = usePointer();
   const fadeRef = useRef(1);
@@ -284,7 +304,11 @@ export function Logo3D({
       <Canvas
         className="!absolute inset-0"
         dpr={[1, 1.75]}
-        gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
+        gl={{
+          antialias: true,
+          alpha: transparent,
+          powerPreference: "high-performance",
+        }}
         camera={{ position: [0, 0, 6], fov: 35 }}
       >
         <Scene
@@ -293,6 +317,7 @@ export function Logo3D({
           fadeRef={fadeRef}
           scaleFactor={scaleFactor}
           lift={lift}
+          transparent={transparent}
         />
       </Canvas>
     </div>

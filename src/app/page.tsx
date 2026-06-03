@@ -21,11 +21,7 @@ export default async function Home() {
     <>
       <HomeBackground />
       <div className="relative z-10">
-        <Hero
-          headline={home.heroHeadline}
-          subtext={home.heroSubtext}
-          ctas={home.heroCtas}
-        />
+        <Hero headline={home.heroHeadline} subtext={home.heroSubtext} />
         <Showreel data={home.showreel} />
       <Services services={home.services} />
       <TechnologyLayer data={home.technology} />
