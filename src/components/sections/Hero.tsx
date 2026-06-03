@@ -2,7 +2,13 @@
 
 import { useRef } from "react";
 import dynamic from "next/dynamic";
-import { motion, useScroll, useTransform } from "motion/react";
+import {
+  motion,
+  useReducedMotion,
+  useScroll,
+  useTransform,
+  type Variants,
+} from "motion/react";
 
 const Logo3D = dynamic(
   () => import("@/components/effects/Logo3D").then((m) => m.Logo3D),
@@ -14,8 +20,18 @@ interface HeroProps {
   subtext: string;
 }
 
+const fadeUp: Variants = {
+  hidden: { opacity: 0, y: 30 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.85, ease: [0.16, 1, 0.3, 1] },
+  },
+};
+
 export function Hero({ headline, subtext }: HeroProps) {
   const ref = useRef<HTMLElement>(null);
+  const reduced = useReducedMotion();
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start start", "end start"],
@@ -38,16 +54,34 @@ export function Hero({ headline, subtext }: HeroProps) {
 
       <motion.div
         style={{ opacity: textOpacity, y: textY }}
-        className="relative z-10 flex flex-col items-center gap-5 px-6 pb-[6vh] text-center"
+        className="relative z-10 px-6 pb-[6vh]"
       >
-        <h1 className="display text-gradient text-balance text-3xl leading-[0.96] [text-shadow:0_2px_40px_rgba(0,0,0,0.65)] sm:text-4xl md:text-5xl">
-          <span className="block">{line1}</span>
-          {line2 && <span className="block">{line2}</span>}
-        </h1>
-        <p className="lead max-w-xl [text-shadow:0_2px_24px_rgba(0,0,0,0.75)]">
-          {subtext}
-        </p>
-        <p className="eyebrow mt-2 animate-float">↓ Przewiń</p>
+        {/* staggered load-in entrance (after the loader clears) */}
+        <motion.div
+          initial={reduced ? "show" : "hidden"}
+          animate="show"
+          variants={{
+            show: { transition: { staggerChildren: 0.12, delayChildren: 0.45 } },
+          }}
+          className="flex flex-col items-center gap-5 text-center"
+        >
+          <motion.h1
+            variants={fadeUp}
+            className="display text-gradient text-balance text-3xl leading-[0.96] [text-shadow:0_2px_40px_rgba(0,0,0,0.65)] sm:text-4xl md:text-5xl"
+          >
+            <span className="block">{line1}</span>
+            {line2 && <span className="block">{line2}</span>}
+          </motion.h1>
+          <motion.p
+            variants={fadeUp}
+            className="lead max-w-xl [text-shadow:0_2px_24px_rgba(0,0,0,0.75)]"
+          >
+            {subtext}
+          </motion.p>
+          <motion.div variants={fadeUp}>
+            <p className="eyebrow mt-2 animate-float">↓ Przewiń</p>
+          </motion.div>
+        </motion.div>
       </motion.div>
     </section>
   );

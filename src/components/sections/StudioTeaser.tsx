@@ -33,7 +33,7 @@ export function StudioTeaser({ data }: { data: Homepage["studioTeaser"] }) {
             <div className="absolute inset-[32%] rounded-full border border-accent/40" />
             <div className="absolute inset-[46%] rotate-45 border border-line-strong bg-bg-elevated/40 backdrop-blur-sm" />
             <span className="absolute bottom-6 left-6 font-mono text-xs uppercase tracking-[0.28em] text-ink-faint">
-              Image · Technology · Space
+              Content · Technology · Space
             </span>
           </div>
           </Parallax>
