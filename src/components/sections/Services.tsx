@@ -59,9 +59,9 @@ function ServiceVisualBlock({ visual }: { visual: ServiceVisual }) {
     <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-line bg-bg-raised">
       {visual === "experience" && (
         <>
-          <ParticleBackground density={0.7} />
-          <div className="absolute inset-0 glow opacity-80" />
-          <div className="absolute inset-0 grid-field opacity-30" />
+          <ParticleBackground density={0.5} />
+          <div className="absolute inset-0 glow opacity-50" />
+          <div className="absolute inset-0 grid-field opacity-25" />
         </>
       )}
 
@@ -95,14 +95,14 @@ function ServiceVisualBlock({ visual }: { visual: ServiceVisual }) {
               backgroundSize: "22px 22px",
             }}
           />
-          <MouseLight size="18rem" intensity={0.4} />
+          <MouseLight size="18rem" intensity={0.3} />
           <div className="absolute inset-0 [mask-image:radial-gradient(circle_at_center,#000,transparent_75%)]" />
         </>
       )}
 
       {visual === "product" && (
         <div className="absolute inset-0 grid place-items-center">
-          <div className="absolute inset-0 glow opacity-70" />
+          <div className="absolute inset-0 glow opacity-50" />
           <div className="relative h-3/5 w-3/5">
             <div className="absolute inset-0 animate-spin-slow rounded-full border border-line-strong" />
             <div className="absolute inset-[14%] animate-spin-slow-rev rounded-full border border-accent/40" />

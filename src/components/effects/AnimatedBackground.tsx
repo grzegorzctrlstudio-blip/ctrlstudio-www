@@ -24,10 +24,11 @@ export function AnimatedBackground() {
 
   useEffect(() => setMounted(true), []);
 
-  if (!mounted || reduced || !wide || pathname.startsWith("/demo")) return null;
+  if (!mounted || reduced || !wide) return null;
 
-  // Punchy on the home hero; calm behind content-heavy pages (forms, grids).
-  const intensity = pathname === "/" ? 1.1 : 0.5;
+  // Subtle, atmospheric — the lamp hero covers it up top; it only breathes
+  // behind the content sections, so keep it calm.
+  const intensity = pathname === "/" ? 0.7 : 0.45;
 
   return (
     <div className="pointer-events-none fixed inset-0 -z-[9]" aria-hidden>

@@ -117,12 +117,12 @@ export const homepage: Homepage = {
 
   selectedWork: {
     title: "Wybrane realizacje",
-    text: "Miejsce na projekty CTRLstudio: oprawy eventów, instalacje, prezentacje produktowe, ekspozycje i doświadczenia wizualne.",
+    text: "Oprawy eventów, instalacje, prezentacje produktowe i doświadczenia wizualne dla przestrzeni.",
   },
 
   studioTeaser: {
     title: "Studio",
-    text: "CTRLstudio działa na styku obrazu, technologii i przestrzeni. Łączymy kreację z technicznym wdrożeniem, żeby tworzyć projekty, które dobrze wyglądają i działają w realnych warunkach.",
+    text: "CTRLstudio działa na styku obrazu, technologii i przestrzeni — łączymy kreację z technicznym wdrożeniem.",
     cta: { label: "Poznaj studio", href: "/studio" },
   },
 
