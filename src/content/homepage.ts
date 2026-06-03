@@ -21,6 +21,7 @@ export const homepage: Homepage = {
     text: "Zobacz, jak obraz, ruch i technologia pracują razem w przestrzeni.",
     src: "/assets/showreel.mp4",
     poster: "/assets/showreel-poster.svg",
+    vimeoId: "358824206",
   },
 
   services: [

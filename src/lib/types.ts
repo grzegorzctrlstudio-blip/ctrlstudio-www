@@ -87,6 +87,7 @@ export interface Homepage {
     text: string;
     src?: string;
     poster?: string;
+    vimeoId?: string;
   };
   services: Service[];
   technology: { title: string; text: string; tags: string[] };
