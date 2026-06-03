@@ -40,7 +40,11 @@ export function Header() {
     };
   }, [open]);
 
-  if (pathname.startsWith("/demo") || pathname.startsWith("/scroll"))
+  if (
+    pathname.startsWith("/demo") ||
+    pathname.startsWith("/scroll") ||
+    pathname.startsWith("/tlo")
+  )
     return null;
 
   return (
