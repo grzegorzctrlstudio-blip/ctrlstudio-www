@@ -21,6 +21,8 @@ interface ScrollExpandMediaProps {
   date?: string;
   scrollToExpand?: string;
   textBlend?: boolean;
+  /** Fires when the media finishes expanding (true) or re-collapses (false). */
+  onExpandedChange?: (expanded: boolean) => void;
   children?: ReactNode;
 }
 
@@ -33,6 +35,7 @@ const ScrollExpandMedia = ({
   date,
   scrollToExpand,
   textBlend,
+  onExpandedChange,
   children,
 }: ScrollExpandMediaProps) => {
   const [scrollProgress, setScrollProgress] = useState<number>(0);
@@ -156,6 +159,10 @@ const ScrollExpandMedia = ({
     return () => window.removeEventListener("resize", checkIfMobile);
   }, []);
 
+  useEffect(() => {
+    onExpandedChange?.(mediaFullyExpanded);
+  }, [mediaFullyExpanded, onExpandedChange]);
+
   const mediaWidth = 300 + scrollProgress * (isMobileState ? 650 : 1250);
   const mediaHeight = 400 + scrollProgress * (isMobileState ? 200 : 400);
   const textTranslateX = scrollProgress * (isMobileState ? 180 : 150);
@@ -268,18 +275,18 @@ const ScrollExpandMedia = ({
                   textBlend ? "mix-blend-difference" : "mix-blend-normal"
                 }`}
               >
-                <motion.h2
-                  className="font-display text-4xl font-bold uppercase text-ink transition-none md:text-5xl lg:text-6xl"
+                <motion.div
+                  className="font-display text-4xl font-bold uppercase tracking-tight text-ink transition-none md:text-5xl lg:text-6xl"
                   style={{ transform: `translateX(-${textTranslateX}vw)` }}
                 >
                   {firstWord}
-                </motion.h2>
-                <motion.h2
-                  className="font-display text-center text-4xl font-bold uppercase text-ink transition-none md:text-5xl lg:text-6xl"
+                </motion.div>
+                <motion.div
+                  className="font-display text-center text-4xl font-bold uppercase tracking-tight text-ink transition-none md:text-5xl lg:text-6xl"
                   style={{ transform: `translateX(${textTranslateX}vw)` }}
                 >
                   {restOfTitle}
-                </motion.h2>
+                </motion.div>
               </div>
             </div>
 
