@@ -3,17 +3,16 @@
 import { useEffect, useState } from "react";
 import { motion, useMotionValue, useSpring } from "motion/react";
 import { usePointerFine } from "@/hooks/useMediaQuery";
-import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 /**
  * Premium custom cursor: a precise dot + a lagging ring (mix-blend-difference,
- * so it reads on any background). Desktop pointers only; never on touch or
- * reduced motion. Native cursor is hidden via the `has-cursor` body class.
+ * so it reads on any background). Desktop / fine-pointer only (it's
+ * user-driven, so it stays on under reduced motion). Native cursor hidden
+ * via the `has-cursor` body class.
  */
 export function Cursor() {
   const fine = usePointerFine();
-  const reduced = usePrefersReducedMotion();
-  const enabled = fine && !reduced;
+  const enabled = fine;
 
   const x = useMotionValue(-100);
   const y = useMotionValue(-100);

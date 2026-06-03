@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
-import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 interface ParticleBackgroundProps {
   className?: string;
@@ -33,7 +32,6 @@ export function ParticleBackground({
   accent = true,
 }: ParticleBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const reduced = usePrefersReducedMotion();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -82,7 +80,7 @@ export function ParticleBackground({
 
       for (const p of particles) {
         const shift = p.z * 26;
-        const drift = reduced ? 0 : Math.sin(time * 0.0006 + p.ph) * 4 * p.z;
+        const drift = Math.sin(time * 0.0006 + p.ph) * 4 * p.z;
         const px = p.x - mx * shift;
         const py = p.y - my * shift + drift;
         const alpha = 0.12 + p.z * 0.5;
@@ -107,7 +105,7 @@ export function ParticleBackground({
       target.y = (e.clientY - rect.top) / rect.height;
     };
     const onVisibility = () => {
-      running = !document.hidden && !reduced;
+      running = !document.hidden;
       if (running) raf = requestAnimationFrame(loop);
       else cancelAnimationFrame(raf);
     };
@@ -118,11 +116,7 @@ export function ParticleBackground({
     window.addEventListener("pointermove", onMove, { passive: true });
     document.addEventListener("visibilitychange", onVisibility);
 
-    if (reduced) {
-      draw(0); // single static frame
-    } else {
-      raf = requestAnimationFrame(loop);
-    }
+    raf = requestAnimationFrame(loop);
 
     return () => {
       running = false;
@@ -131,7 +125,7 @@ export function ParticleBackground({
       window.removeEventListener("pointermove", onMove);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [reduced, density, accent]);
+  }, [density, accent]);
 
   return (
     <canvas

@@ -3,7 +3,6 @@
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { usePointerFine } from "@/hooks/useMediaQuery";
-import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 interface MouseLightProps {
   className?: string;
@@ -24,8 +23,7 @@ export function MouseLight({
 }: MouseLightProps) {
   const ref = useRef<HTMLDivElement>(null);
   const fine = usePointerFine();
-  const reduced = usePrefersReducedMotion();
-  const interactive = fine && !reduced;
+  const interactive = fine;
 
   useEffect(() => {
     if (!interactive) return;

@@ -2,6 +2,8 @@
 
 import type { Cta } from "@/lib/types";
 import { Hero as LampHero } from "@/components/ui/lamp-hero";
+import { ParticleBackground } from "@/components/effects/ParticleBackground";
+import { MouseLight } from "@/components/effects/MouseLight";
 
 interface HeroProps {
   headline: string;
@@ -13,6 +15,12 @@ export function Hero({ headline, subtext, ctas }: HeroProps) {
   return (
     <LampHero
       className="min-h-svh"
+      fx={
+        <>
+          <MouseLight size="44rem" intensity={0.22} />
+          <ParticleBackground density={0.9} />
+        </>
+      }
       title={headline}
       subtitle={subtext}
       titleClassName="display max-w-[16ch] text-gradient text-balance"

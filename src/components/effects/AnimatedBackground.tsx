@@ -4,7 +4,6 @@ import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
-import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 const ShaderBackground = dynamic(
   () => import("@/components/effects/ShaderBackground").then((m) => m.ShaderBackground),
@@ -17,14 +16,13 @@ const ShaderBackground = dynamic(
  * (from the layout) shows instead.
  */
 export function AnimatedBackground() {
-  const reduced = usePrefersReducedMotion();
   const wide = useMediaQuery("(min-width: 768px)");
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
 
-  if (!mounted || reduced || !wide) return null;
+  if (!mounted || !wide) return null;
 
   // Subtle, atmospheric — the lamp hero covers it up top; it only breathes
   // behind the content sections, so keep it calm.

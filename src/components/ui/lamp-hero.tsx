@@ -20,6 +20,8 @@ interface HeroProps extends React.HTMLAttributes<HTMLElement> {
   titleClassName?: string;
   subtitleClassName?: string;
   actionsClassName?: string;
+  /** Interactive/animated layer rendered behind the lamp glow (e.g. particles). */
+  fx?: React.ReactNode;
 }
 
 const ACCENT_CONIC_LEFT =
@@ -44,6 +46,7 @@ const Hero = React.forwardRef<HTMLElement, HeroProps>(
       titleClassName,
       subtitleClassName,
       actionsClassName,
+      fx,
       ...props
     },
     ref,
@@ -57,6 +60,11 @@ const Hero = React.forwardRef<HTMLElement, HeroProps>(
         )}
         {...props}
       >
+        {fx && (
+          <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+            {fx}
+          </div>
+        )}
         {gradient && (
           <div className="absolute top-0 isolate z-0 flex w-screen flex-1 items-start justify-center">
             {blur && (
