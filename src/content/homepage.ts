@@ -3,7 +3,7 @@ import type { Homepage } from "@/lib/types";
 export const homepage: Homepage = {
   heroHeadline: "Visual experiences powered by technology",
   heroSubtext:
-    "Tworzymy doświadczenia wizualne dla marek, wydarzeń i przestrzeni. Łączymy content, technologię i przestrzeń, żeby tworzyć projekty, które nie tylko dobrze wyglądają, ale też działają w realnym świecie.",
+    "Doświadczenia wizualne dla marek, wydarzeń i przestrzeni. Łączymy content, technologię i przestrzeń.",
   heroCtas: [
     { label: "Zobacz, co robimy", href: "/work" },
     { label: "Zobacz showreel", href: "#showreel" },
@@ -64,7 +64,7 @@ export const homepage: Homepage = {
 
   technology: {
     title: "Technologia jest po to, żeby działać",
-    text: "Technologię dobieramy do doświadczenia. Projektujemy, produkujemy, testujemy i wspieramy realizacje w przestrzeni — podczas eventów, targów, ekspozycji i stałych instalacji.",
+    text: "Technologię dobieramy do doświadczenia — projektujemy, produkujemy, testujemy i wdrażamy na miejscu.",
     tags: [
       "content",
       "ruch",
@@ -80,7 +80,7 @@ export const homepage: Homepage = {
 
   process: {
     title: "Od koncepcji po wdrożenie",
-    text: "Od pierwszego pomysłu po działające rozwiązanie w przestrzeni. Projektujemy, produkujemy, testujemy i wspieramy realizacje na miejscu — podczas eventów, targów, ekspozycji i stałych instalacji.",
+    text: "Od pierwszego pomysłu po działające rozwiązanie w przestrzeni.",
     steps: [
       {
         index: "01",
