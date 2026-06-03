@@ -18,12 +18,18 @@ export default function DemoIndex() {
             powiedz które robimy.
           </p>
         </div>
-        <div className="grid w-full gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid w-full gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <DemoLink
             href="/demo/d"
             tag="Demo D · ciemny ★"
             title="Glass (B + C)"
             desc="Ciemno (kolory z B) + szkło z odbiciami, cieniami i lustrzaną taflą."
+          />
+          <DemoLink
+            href="/demo/e"
+            tag="Demo E · cosmic"
+            title="Cosmic"
+            desc="Gwiazdy CSS + animowany napis (komponent 21st.dev)."
           />
           <DemoLink
             href="/demo/c"

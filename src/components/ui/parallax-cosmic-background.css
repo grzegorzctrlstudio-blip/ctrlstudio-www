@@ -1,0 +1,225 @@
+/* Cosmic parallax background — scoped under .cosmic-parallax-container so the
+   generic ids (#stars, #earth, #title…) don't leak into the rest of the app. */
+
+:root {
+  --animation-iteration: infinite;
+}
+
+@keyframes animStar {
+  from {
+    transform: translateY(0px);
+  }
+  to {
+    transform: translateY(-2000px);
+  }
+}
+
+@keyframes animGravity {
+  0% {
+    transform: translateY(-26px);
+    opacity: 0;
+  }
+  30%,
+  80% {
+    letter-spacing: 0.4em;
+    transform: translateY(0px);
+    opacity: 1;
+  }
+  92%,
+  100% {
+    letter-spacing: 0.35em;
+    transform: translateY(-4px);
+    opacity: 0;
+  }
+}
+
+@keyframes animDont {
+  0%,
+  15% {
+    transform: translateY(-26px);
+    opacity: 0;
+  }
+  35%,
+  80% {
+    transform: translateY(0px);
+    opacity: 1;
+  }
+  92%,
+  100% {
+    transform: translateY(-4px);
+    opacity: 0;
+  }
+}
+
+@keyframes animLet {
+  0%,
+  25% {
+    transform: translateY(-26px);
+    opacity: 0;
+  }
+  45%,
+  80% {
+    transform: translateY(0px);
+    opacity: 1;
+  }
+  92%,
+  100% {
+    transform: translateY(-4px);
+    opacity: 0;
+  }
+}
+
+@keyframes animGo {
+  0%,
+  35% {
+    transform: translateY(-26px);
+    opacity: 0;
+  }
+  55%,
+  80% {
+    transform: translateY(0px);
+    opacity: 1;
+  }
+  92%,
+  100% {
+    transform: translateY(-4px);
+    opacity: 0;
+  }
+}
+
+.cosmic-parallax-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: radial-gradient(ellipse at bottom, #1b2735 0%, #06080f 100%);
+  color: #fff;
+}
+
+/* star layers */
+.cosmic-parallax-container .cosmic-stars,
+.cosmic-parallax-container .cosmic-stars-medium,
+.cosmic-parallax-container .cosmic-stars-large {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: transparent;
+  border-radius: 50%;
+}
+.cosmic-parallax-container .cosmic-stars {
+  width: 1px;
+  height: 1px;
+  animation: animStar 50s linear var(--animation-iteration);
+}
+.cosmic-parallax-container .cosmic-stars-medium {
+  width: 2px;
+  height: 2px;
+  animation: animStar 100s linear var(--animation-iteration);
+}
+.cosmic-parallax-container .cosmic-stars-large {
+  width: 3px;
+  height: 3px;
+  animation: animStar 150s linear var(--animation-iteration);
+}
+/* seamless loop: the ::after reuses the inline box-shadow via inherit */
+.cosmic-parallax-container .cosmic-stars::after,
+.cosmic-parallax-container .cosmic-stars-medium::after,
+.cosmic-parallax-container .cosmic-stars-large::after {
+  content: " ";
+  position: absolute;
+  top: 2000px;
+  background: transparent;
+  border-radius: 50%;
+  box-shadow: inherit;
+}
+.cosmic-parallax-container .cosmic-stars::after {
+  width: 1px;
+  height: 1px;
+}
+.cosmic-parallax-container .cosmic-stars-medium::after {
+  width: 2px;
+  height: 2px;
+}
+.cosmic-parallax-container .cosmic-stars-large::after {
+  width: 3px;
+  height: 3px;
+}
+
+/* horizon glow + planet curvature */
+.cosmic-parallax-container #horizon {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 40%;
+  pointer-events: none;
+}
+.cosmic-parallax-container #horizon .glow {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 160%;
+  height: 220px;
+  background: radial-gradient(
+    ellipse at bottom,
+    rgba(110, 150, 255, 0.55) 0%,
+    rgba(110, 150, 255, 0) 65%
+  );
+  filter: blur(18px);
+}
+.cosmic-parallax-container #earth {
+  position: absolute;
+  bottom: -160%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200%;
+  height: 200%;
+  border-radius: 50%;
+  background: #06080f;
+  box-shadow: 0 0 80px 12px rgba(110, 150, 255, 0.4);
+}
+
+/* title + subtitle */
+.cosmic-parallax-container #title {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-display, sans-serif);
+  font-weight: 800;
+  font-size: clamp(3rem, 12vw, 11rem);
+  letter-spacing: 0.04em;
+  line-height: 0.9;
+  text-align: center;
+  white-space: nowrap;
+  text-shadow: 0 0 36px rgba(150, 180, 255, 0.45);
+}
+.cosmic-parallax-container #subtitle {
+  position: absolute;
+  top: 56%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono, monospace);
+  font-size: clamp(0.7rem, 1.6vw, 1.1rem);
+  color: #cfe0ff;
+  text-align: center;
+  white-space: nowrap;
+}
+.cosmic-parallax-container #subtitle span {
+  display: inline-block;
+  opacity: 0;
+  letter-spacing: 0.35em;
+}
+.cosmic-parallax-container .subtitle-part-1 {
+  animation: animGravity 10s ease-out var(--animation-iteration);
+}
+.cosmic-parallax-container .subtitle-part-2 {
+  animation: animDont 10s ease-out var(--animation-iteration);
+}
+.cosmic-parallax-container .subtitle-part-3 {
+  animation: animLet 10s ease-out var(--animation-iteration);
+}
+.cosmic-parallax-container .subtitle-part-4 {
+  animation: animGo 10s ease-out var(--animation-iteration);
+}
