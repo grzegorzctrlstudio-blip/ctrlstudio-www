@@ -42,9 +42,13 @@ function GlassLogo({ mouse }: { mouse: MouseRef }) {
     const t = state.clock.elapsedTime;
     const g = group.current;
     if (!g) return;
-    g.rotation.y += (mouse.current.x * 0.45 - g.rotation.y) * 0.05 + 0.0;
-    g.rotation.x += (-mouse.current.y * 0.28 - g.rotation.x) * 0.05;
-    g.position.y = 0.15 + Math.sin(t * 0.5) * 0.07;
+    // gentle continuous 3D sway (the "effect") + mouse tilt on top — the glass
+    // refracts light and particles dynamically while CTRL stays readable
+    const swayY = Math.sin(t * 0.35) * 0.38;
+    const swayX = Math.sin(t * 0.5) * 0.06;
+    g.rotation.y += (swayY + mouse.current.x * 0.35 - g.rotation.y) * 0.06;
+    g.rotation.x += (swayX - mouse.current.y * 0.22 - g.rotation.x) * 0.06;
+    g.position.y = 0.15 + Math.sin(t * 0.5) * 0.06;
   });
 
   const s = 0.0039;
