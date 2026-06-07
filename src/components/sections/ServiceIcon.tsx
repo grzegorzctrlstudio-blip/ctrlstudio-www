@@ -1,13 +1,22 @@
 "use client";
 
 import { useRef } from "react";
+import { cn } from "@/lib/utils";
 
 /**
- * Hyperrealistic 3D pillar icon (Higgsfield render). Floats idly, tilts in 3D
- * toward the pointer, and its glow lifts on hover. The render is on black, so
- * `mix-blend-screen` drops the black into the dark card.
+ * Hyperrealistic 3D pillar icon (Higgsfield render). Continuously rotates (when
+ * `spin`), floats, tilts in 3D toward the pointer and its glow lifts on hover.
+ * The render is on black, so `mix-blend-screen` drops the black into the card.
  */
-export function ServiceIcon({ src, alt }: { src: string; alt: string }) {
+export function ServiceIcon({
+  src,
+  alt,
+  spin = false,
+}: {
+  src: string;
+  alt: string;
+  spin?: boolean;
+}) {
   const tilt = useRef<HTMLDivElement>(null);
 
   const onMove = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -29,7 +38,7 @@ export function ServiceIcon({ src, alt }: { src: string; alt: string }) {
       data-cursor
       className="group relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-line bg-bg-raised [perspective:1000px]"
     >
-      <div className="glow absolute inset-0 opacity-40 transition-opacity duration-500 group-hover:opacity-75" />
+      <div className="glow absolute inset-0 opacity-40 transition-opacity duration-500 group-hover:opacity-80" />
       <div className="absolute inset-0 grid place-items-center">
         <div className="h-[82%] w-[82%] animate-float">
           <div
@@ -40,7 +49,10 @@ export function ServiceIcon({ src, alt }: { src: string; alt: string }) {
             <img
               src={src}
               alt={alt}
-              className="h-full w-full object-contain mix-blend-screen"
+              className={cn(
+                "h-full w-full object-contain mix-blend-screen",
+                spin && "animate-spin-slow",
+              )}
               loading="lazy"
               draggable={false}
             />

@@ -10,9 +10,16 @@ interface ProjectCardProps {
   project: Project;
   index?: number;
   className?: string;
+  /** Wide cinematic hero treatment (full-width lead card). */
+  featured?: boolean;
 }
 
-export function ProjectCard({ project, index = 0, className }: ProjectCardProps) {
+export function ProjectCard({
+  project,
+  index = 0,
+  className,
+  featured = false,
+}: ProjectCardProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const onEnter = () => {
@@ -41,13 +48,19 @@ export function ProjectCard({ project, index = 0, className }: ProjectCardProps)
       aria-label={`${project.title} — zobacz projekt`}
     >
       {/* visual */}
-      <div className="relative aspect-[4/3] w-full overflow-hidden">
+      <div
+        className={cn(
+          "relative w-full overflow-hidden",
+          featured ? "aspect-[16/10] sm:aspect-[21/9]" : "aspect-[4/3]",
+        )}
+      >
         {project.thumbnail ? (
           <Image
             src={project.thumbnail}
             alt={project.title}
             fill
-            sizes="(max-width: 768px) 100vw, 50vw"
+            sizes={featured ? "100vw" : "(max-width: 768px) 100vw, 50vw"}
+            priority={featured}
             className="object-cover transition-transform duration-[900ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.06]"
           />
         ) : (
@@ -94,7 +107,12 @@ export function ProjectCard({ project, index = 0, className }: ProjectCardProps)
         <div className="min-w-0">
           <p className="eyebrow mb-2 truncate">{project.category}</p>
           <h3 className="display-lg text-ink">{project.title}</h3>
-          <p className="mt-3 max-w-md text-sm leading-relaxed text-ink-dim opacity-0 transition-opacity duration-500 group-hover:opacity-100">
+          <p
+            className={cn(
+              "mt-3 max-w-md text-sm leading-relaxed text-ink-dim transition-opacity duration-500",
+              featured ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+            )}
+          >
             {project.shortDescription}
           </p>
         </div>

@@ -9,6 +9,7 @@ export const projects: Project[] = [
   {
     title: "Identyfikacja wizualna eventu",
     slug: "identyfikacja-wizualna-eventu",
+    thumbnail: "/assets/work/identyfikacja-wizualna-eventu.webp",
     category: "Event · Oprawa wizualna",
     client: "Projekt demonstracyjny",
     year: "2025",
@@ -24,6 +25,7 @@ export const projects: Project[] = [
   {
     title: "Interaktywna prezentacja produktu",
     slug: "interaktywna-prezentacja-produktu",
+    thumbnail: "/assets/work/interaktywna-prezentacja-produktu.webp",
     category: "Produkt · Interakcja",
     client: "Projekt demonstracyjny",
     year: "2025",
@@ -42,6 +44,7 @@ export const projects: Project[] = [
   {
     title: "Stała instalacja multimedialna",
     slug: "stala-instalacja-multimedialna",
+    thumbnail: "/assets/work/stala-instalacja-multimedialna.webp",
     category: "Instalacja · Przestrzeń stała",
     client: "Projekt demonstracyjny",
     year: "2024",
@@ -57,6 +60,7 @@ export const projects: Project[] = [
   {
     title: "Scenografia cyfrowa na targi",
     slug: "scenografia-cyfrowa-na-targi",
+    thumbnail: "/assets/work/scenografia-cyfrowa-na-targi.webp",
     category: "Targi · Scenografia cyfrowa",
     client: "Projekt demonstracyjny",
     year: "2024",
@@ -75,6 +79,7 @@ export const projects: Project[] = [
   {
     title: "Doświadczenie wizualne dla przestrzeni marki",
     slug: "doswiadczenie-wizualne-przestrzeni-marki",
+    thumbnail: "/assets/work/doswiadczenie-wizualne-przestrzeni-marki.webp",
     category: "Showroom · Brand space",
     client: "Projekt demonstracyjny",
     year: "2025",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import {
   motion,
@@ -9,6 +9,7 @@ import {
   useTransform,
   type Variants,
 } from "motion/react";
+import { TextScramble } from "@/components/ui/text-scramble";
 
 const Logo3D = dynamic(
   () => import("@/components/effects/Logo3D").then((m) => m.Logo3D),
@@ -44,6 +45,13 @@ export function Hero({ headline, subtext }: HeroProps) {
   const line1 = idx > 0 ? headline.slice(0, idx).trim() : headline;
   const line2 = idx > 0 ? headline.slice(idx).trim() : "";
 
+  // kick off the text "decode" once the load-in entrance has started
+  const [decoded, setDecoded] = useState(false);
+  useEffect(() => {
+    const id = setTimeout(() => setDecoded(true), 550);
+    return () => clearTimeout(id);
+  }, []);
+
   return (
     <section
       ref={ref}
@@ -69,14 +77,22 @@ export function Hero({ headline, subtext }: HeroProps) {
             variants={fadeUp}
             className="display text-gradient text-balance text-3xl leading-[0.96] [text-shadow:0_2px_40px_rgba(0,0,0,0.65)] sm:text-4xl md:text-5xl"
           >
-            <span className="block">{line1}</span>
-            {line2 && <span className="block">{line2}</span>}
+            <TextScramble as="span" className="block" trigger={decoded} duration={0.9} speed={0.03}>
+              {line1}
+            </TextScramble>
+            {line2 && (
+              <TextScramble as="span" className="block" trigger={decoded} duration={1.05} speed={0.03}>
+                {line2}
+              </TextScramble>
+            )}
           </motion.h1>
           <motion.p
             variants={fadeUp}
             className="lead max-w-xl [text-shadow:0_2px_24px_rgba(0,0,0,0.75)]"
           >
-            {subtext}
+            <TextScramble as="span" trigger={decoded} duration={1.1} speed={0.025}>
+              {subtext}
+            </TextScramble>
           </motion.p>
           <motion.div variants={fadeUp}>
             <p className="eyebrow mt-2 animate-float">↓ Przewiń</p>
