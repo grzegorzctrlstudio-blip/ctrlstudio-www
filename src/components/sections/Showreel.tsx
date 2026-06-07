@@ -26,7 +26,6 @@ export function Showreel({ data }: { data: Homepage["showreel"] }) {
 
   const scale = useTransform(scrollYProgress, [0, 0.2], [0.5, 1]);
   const radius = useTransform(scrollYProgress, [0, 0.2], [22, 12]);
-  const topOpacity = useTransform(scrollYProgress, [0, 0.06], [0, 1]);
 
   // audio via Vimeo postMessage API (no SDK dependency)
   const [muted, setMuted] = useState(true);
@@ -56,13 +55,10 @@ export function Showreel({ data }: { data: Homepage["showreel"] }) {
     <section ref={ref} id="showreel" className="relative h-[200vh]">
       <div className="sticky top-0 flex h-[100svh] flex-col items-center justify-center gap-5 overflow-hidden px-4 sm:gap-7">
         {/* CONTENT · TECHNOLOGY · SPACE — real 3D extruded chrome text,
-            full-bleed across the whole page (not clipped in a box) */}
-        <motion.div
-          style={{ opacity: topOpacity }}
-          className="relative left-1/2 w-screen -translate-x-1/2"
-        >
+            full-bleed across the page; stays visible while scrolling */}
+        <div className="relative left-1/2 w-screen -translate-x-1/2">
           <ShowreelText3D />
-        </motion.div>
+        </div>
 
         {/* the big 16:9 window — scales up with scroll */}
         <motion.div
@@ -77,8 +73,8 @@ export function Showreel({ data }: { data: Homepage["showreel"] }) {
                 onLoad={onIframeLoad}
                 title={data.title}
                 allow="autoplay; fullscreen; picture-in-picture"
-                className="pointer-events-none absolute inset-0 h-full w-full"
-                style={{ border: 0 }}
+                className="pointer-events-none absolute inset-0 h-full w-full scale-[1.04]"
+                style={{ border: 0, background: "#000" }}
               />
               <button
                 type="button"

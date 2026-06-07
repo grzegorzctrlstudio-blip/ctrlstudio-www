@@ -59,12 +59,12 @@ function Words({ pointer, drag }: { pointer: Pointer; drag: DragRef }) {
     const g = new TextGeometry(TEXT, {
       font,
       size: 1,
-      depth: 0.3,
+      depth: 0.34,
       bevelEnabled: true,
-      bevelThickness: 0.05,
-      bevelSize: 0.035,
-      bevelSegments: 2,
-      curveSegments: 4,
+      bevelThickness: 0.045,
+      bevelSize: 0.03,
+      bevelSegments: 5,
+      curveSegments: 10,
     });
     g.computeBoundingBox();
     g.center();
@@ -76,13 +76,16 @@ function Words({ pointer, drag }: { pointer: Pointer; drag: DragRef }) {
     };
   }, [font]);
 
+  // hyperrealistic chrome: sharp reflections + a clearcoat gloss
   const mat = useMemo(
     () =>
-      new THREE.MeshStandardMaterial({
-        color: new THREE.Color("#e7ebf4"),
+      new THREE.MeshPhysicalMaterial({
+        color: new THREE.Color("#eef1f7"),
         metalness: 1,
-        roughness: 0.16,
-        envMapIntensity: 1.35,
+        roughness: 0.05,
+        clearcoat: 1,
+        clearcoatRoughness: 0.08,
+        envMapIntensity: 1.6,
       }),
     [],
   );
@@ -94,9 +97,10 @@ function Words({ pointer, drag }: { pointer: Pointer; drag: DragRef }) {
     if (t0.current === null) t0.current = t;
     const ease = 1 - Math.pow(1 - Math.min(1, (t - t0.current) / 1.3), 3);
 
-    // fit the full width of the screen without clipping vertically
+    // fit the full width of the screen without clipping, then 30% smaller
     const s =
       Math.min((viewport.width * 0.96) / width, (viewport.height * 0.72) / height) *
+      0.7 *
       ease;
     g.scale.setScalar(s);
 
@@ -157,7 +161,7 @@ export function ShowreelText3D() {
     >
       <Canvas
         className="!absolute inset-0"
-        dpr={[1, 1.6]}
+        dpr={[1, 2]}
         frameloop={active ? "always" : "never"}
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
         camera={{ position: [0, 0, 5], fov: 35 }}
