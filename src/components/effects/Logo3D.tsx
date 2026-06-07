@@ -17,8 +17,8 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 /**
  * 3D studio for the real CTRLstudio mark (traced to /assets/ctrl-logo.svg and
  * extruded), with RoomEnvironment reflections, studio lighting, a calm shader
- * backdrop and mouse-orbit. A /assets/ctrl-logo.glb is preferred if present.
- * `fade` (1→0) dissolves the logo; `scaleFactor`/`lift` size & raise it.
+ * backdrop, mouse-orbit AND grab-to-spin (drag with inertia). A
+ * /assets/ctrl-logo.glb is preferred if present.
  */
 
 const GLB_URL = "/assets/ctrl-logo.glb";
@@ -39,11 +39,91 @@ function usePointer() {
 type Pointer = ReturnType<typeof usePointer>;
 type FadeRef = MutableRefObject<number>;
 
+/* ---- grab-to-spin (drag orbit with inertia) ---- */
+type DragState = {
+  dragging: boolean;
+  rx: number;
+  ry: number;
+  vrx: number;
+  vry: number;
+  lx: number;
+  ly: number;
+};
+type DragRef = MutableRefObject<DragState>;
+
+function useDrag(): DragRef {
+  return useRef<DragState>({
+    dragging: false,
+    rx: 0,
+    ry: 0,
+    vrx: 0,
+    vry: 0,
+    lx: 0,
+    ly: 0,
+  });
+}
+
+/** Attaches pointer handlers to the canvas so you can grab + spin the logo. */
+function DragControls({ drag }: { drag: DragRef }) {
+  const { gl } = useThree();
+  useEffect(() => {
+    const el = gl.domElement;
+    el.style.touchAction = "pan-y"; // vertical swipe still scrolls the page
+    el.style.cursor = "grab";
+    const down = (e: PointerEvent) => {
+      drag.current.dragging = true;
+      drag.current.lx = e.clientX;
+      drag.current.ly = e.clientY;
+      drag.current.vrx = 0;
+      drag.current.vry = 0;
+      el.style.cursor = "grabbing";
+    };
+    const move = (e: PointerEvent) => {
+      if (!drag.current.dragging) return;
+      const dx = e.clientX - drag.current.lx;
+      const dy = e.clientY - drag.current.ly;
+      drag.current.lx = e.clientX;
+      drag.current.ly = e.clientY;
+      drag.current.ry += dx * 0.008;
+      drag.current.rx += dy * 0.008;
+      drag.current.vry = dx * 0.008;
+      drag.current.vrx = dy * 0.008;
+    };
+    const up = () => {
+      drag.current.dragging = false;
+      el.style.cursor = "grab";
+    };
+    el.addEventListener("pointerdown", down);
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    return () => {
+      el.removeEventListener("pointerdown", down);
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+    };
+  }, [gl, drag]);
+  return null;
+}
+
+/** Advance drag inertia + relax the tilt back to level. Call once per frame. */
+function stepDrag(drag: DragRef) {
+  const d = drag.current;
+  if (!d.dragging) {
+    d.rx += d.vrx;
+    d.ry += d.vry;
+    d.vrx *= 0.93;
+    d.vry *= 0.93;
+    d.rx *= 0.96; // ease the up/down tilt back so it never sticks upside-down
+  }
+  d.rx = Math.max(-1.1, Math.min(1.1, d.rx));
+}
+
 interface LogoProps {
   pointer: Pointer;
   fadeRef: FadeRef;
   scaleFactor: number;
   lift: number;
+  drag: DragRef;
 }
 
 function StudioEnv() {
@@ -110,20 +190,6 @@ function CalmBackdrop({ pointer }: { pointer: Pointer }) {
   );
 }
 
-function useMouseRig(ref: React.RefObject<THREE.Object3D | null>, pointer: Pointer) {
-  const e = useRef({ x: 0, y: 0 });
-  useFrame((state) => {
-    const o = ref.current;
-    if (!o) return;
-    e.current.x += (pointer.current.tx - e.current.x) * 0.06;
-    e.current.y += (pointer.current.ty - e.current.y) * 0.06;
-    const t = state.clock.elapsedTime;
-    o.rotation.y = e.current.x * 0.5 + Math.sin(t * 0.25) * 0.08;
-    o.rotation.x = -e.current.y * 0.28;
-    o.position.y = Math.sin(t * 0.7) * 0.05;
-  });
-}
-
 function chromeMaterial() {
   return new THREE.MeshStandardMaterial({
     color: new THREE.Color("#e6eaf3"),
@@ -134,7 +200,7 @@ function chromeMaterial() {
   });
 }
 
-function SvgLogo({ pointer, fadeRef, scaleFactor, lift }: LogoProps) {
+function SvgLogo({ pointer, fadeRef, scaleFactor, lift, drag }: LogoProps) {
   const data = useLoader(SVGLoader, SVG_URL);
   const { viewport } = useThree();
   const inner = useRef<THREE.Group>(null);
@@ -172,13 +238,16 @@ function SvgLogo({ pointer, fadeRef, scaleFactor, lift }: LogoProps) {
     const s = ((viewport.width * scaleFactor) / width) * ease;
     inner.current.scale.set(s, -s, s);
 
+    stepDrag(drag);
     mouse.current.x += (pointer.current.tx - mouse.current.x) * 0.06;
     mouse.current.y += (pointer.current.ty - mouse.current.y) * 0.06;
     inner.current.rotation.y =
       (1 - ease) * -Math.PI * 0.6 +
       mouse.current.x * 0.5 +
-      Math.sin(t * 0.35) * 0.18;
-    inner.current.rotation.x = -mouse.current.y * 0.26 + Math.sin(t * 0.5) * 0.04;
+      Math.sin(t * 0.35) * 0.18 +
+      drag.current.ry;
+    inner.current.rotation.x =
+      -mouse.current.y * 0.26 + Math.sin(t * 0.5) * 0.04 + drag.current.rx;
     inner.current.position.y = Math.sin(t * 0.8) * 0.05;
 
     const fade = fadeRef.current;
@@ -196,11 +265,11 @@ function SvgLogo({ pointer, fadeRef, scaleFactor, lift }: LogoProps) {
   );
 }
 
-function GlbLogo({ pointer, fadeRef, scaleFactor, lift }: LogoProps) {
+function GlbLogo({ pointer, fadeRef, scaleFactor, lift, drag }: LogoProps) {
   const gltf = useLoader(GLTFLoader, GLB_URL);
   const { viewport } = useThree();
   const inner = useRef<THREE.Group>(null);
-  useMouseRig(inner, pointer);
+  const mouse = useRef({ x: 0, y: 0 });
 
   const model = useMemo(() => {
     const s = gltf.scene.clone(true);
@@ -219,11 +288,20 @@ function GlbLogo({ pointer, fadeRef, scaleFactor, lift }: LogoProps) {
     return { s, w: size.x || 1, mats };
   }, [gltf]);
 
-  useFrame(() => {
+  useFrame((state) => {
     if (!inner.current) return;
+    const t = state.clock.elapsedTime;
     inner.current.scale.setScalar(
       Math.min((viewport.width * scaleFactor) / model.w, 2),
     );
+    stepDrag(drag);
+    mouse.current.x += (pointer.current.tx - mouse.current.x) * 0.06;
+    mouse.current.y += (pointer.current.ty - mouse.current.y) * 0.06;
+    inner.current.rotation.y =
+      mouse.current.x * 0.5 + Math.sin(t * 0.25) * 0.08 + drag.current.ry;
+    inner.current.rotation.x = -mouse.current.y * 0.28 + drag.current.rx;
+    inner.current.position.y = Math.sin(t * 0.7) * 0.05;
+
     const fade = fadeRef.current;
     for (const m of model.mats) {
       m.transparent = fade < 0.999;
@@ -248,6 +326,7 @@ function Scene({
   scaleFactor,
   lift,
   transparent,
+  drag,
 }: {
   glb: boolean;
   pointer: Pointer;
@@ -255,10 +334,12 @@ function Scene({
   scaleFactor: number;
   lift: number;
   transparent: boolean;
+  drag: DragRef;
 }) {
   return (
     <>
       <StudioEnv />
+      <DragControls drag={drag} />
       {!transparent && <CalmBackdrop pointer={pointer} />}
       <ambientLight intensity={0.35} />
       <directionalLight position={[4, 5, 6]} intensity={2.2} />
@@ -266,9 +347,9 @@ function Scene({
       <pointLight position={[0, 1, 5]} intensity={1.2} color="#9aa6ff" />
       <Suspense fallback={null}>
         {glb ? (
-          <GlbLogo pointer={pointer} fadeRef={fadeRef} scaleFactor={scaleFactor} lift={lift} />
+          <GlbLogo pointer={pointer} fadeRef={fadeRef} scaleFactor={scaleFactor} lift={lift} drag={drag} />
         ) : (
-          <SvgLogo pointer={pointer} fadeRef={fadeRef} scaleFactor={scaleFactor} lift={lift} />
+          <SvgLogo pointer={pointer} fadeRef={fadeRef} scaleFactor={scaleFactor} lift={lift} drag={drag} />
         )}
       </Suspense>
     </>
@@ -289,6 +370,7 @@ export function Logo3D({
   transparent?: boolean;
 }) {
   const pointer = usePointer();
+  const drag = useDrag();
   const fadeRef = useRef(1);
   fadeRef.current = fade;
   const [glb, setGlb] = useState(false);
@@ -313,7 +395,7 @@ export function Logo3D({
   }, []);
 
   return (
-    <div ref={rootRef} className={className} aria-hidden>
+    <div ref={rootRef} className={className}>
       <Canvas
         className="!absolute inset-0"
         dpr={[1, 1.75]}
@@ -332,6 +414,7 @@ export function Logo3D({
           scaleFactor={scaleFactor}
           lift={lift}
           transparent={transparent}
+          drag={drag}
         />
       </Canvas>
     </div>
