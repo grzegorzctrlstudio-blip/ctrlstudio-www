@@ -4,19 +4,19 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
+import { DragControls, stepDrag, useDrag, type DragRef } from "./drag3d";
 
 /**
  * Real-time 3D pillar icons — transparent canvas (no background), chrome PBR
- * with RoomEnvironment reflections, the SAME global mouse-orbit as the hero
- * logo. Shapes match each pillar:
- *   play    → Content & animation (a "play" wedge)
- *   network → interactive apps / systems (chrome core in a node net)
- *   panels  → multimedia systems (a stack of screens)
+ * with RoomEnvironment reflections, global mouse-orbit AND grab-to-spin (drag).
+ * Shapes match each pillar:
+ *   play   → Content & animation (a "play" wedge)
+ *   gimbal → interactive apps / realtime systems (nested spinning rings)
+ *   rack   → multimedia systems (a media server with glowing ports)
  * Canvases lazy-mount AND pause (frameloop) when off-screen to stay light.
  */
-export type IconShape = "play" | "network" | "panels";
+export type IconShape = "play" | "gimbal" | "rack";
 
-/** Global cursor in -1..1 (same mapping as the hero logo). */
 function usePointer() {
   const p = useRef({ tx: 0, ty: 0 });
   useEffect(() => {
@@ -79,10 +79,30 @@ function usePlayGeometry() {
   }, []);
 }
 
-function IconMesh({ shape, pointer }: { shape: IconShape; pointer: Pointer }) {
+function IconMesh({
+  shape,
+  pointer,
+  drag,
+}: {
+  shape: IconShape;
+  pointer: Pointer;
+  drag: DragRef;
+}) {
   const group = useRef<THREE.Group>(null);
+  const ringA = useRef<THREE.Mesh>(null);
+  const ringB = useRef<THREE.Mesh>(null);
+  const ringC = useRef<THREE.Mesh>(null);
   const chrome = useChrome();
   const play = usePlayGeometry();
+  const portMat = useMemo(
+    () =>
+      new THREE.MeshBasicMaterial({
+        color: new THREE.Color("#6b79ff"),
+        toneMapped: false,
+        transparent: true,
+      }),
+    [],
+  );
   const e = useRef({ x: 0, y: 0 });
   const t0 = useRef<number | null>(null);
 
@@ -92,63 +112,89 @@ function IconMesh({ shape, pointer }: { shape: IconShape; pointer: Pointer }) {
     const t = state.clock.elapsedTime;
     if (t0.current === null) t0.current = t;
     const p = Math.min(1, (t - t0.current) / 1.1);
-    const ease = 1 - Math.pow(1 - p, 3); // grow + spin in, like the logo
+    const ease = 1 - Math.pow(1 - p, 3);
 
     g.scale.setScalar(1.15 * ease);
+    stepDrag(drag);
     e.current.x += (pointer.current.tx - e.current.x) * 0.06;
     e.current.y += (pointer.current.ty - e.current.y) * 0.06;
     g.rotation.y =
-      (1 - ease) * -Math.PI * 0.5 + e.current.x * 0.6 + t * 0.16; // mouse + slow auto-spin
-    g.rotation.x = -e.current.y * 0.32 + Math.sin(t * 0.5) * 0.05;
+      (1 - ease) * -Math.PI * 0.5 +
+      e.current.x * 0.6 +
+      t * 0.16 +
+      drag.current.ry;
+    g.rotation.x =
+      -e.current.y * 0.32 + Math.sin(t * 0.5) * 0.05 + drag.current.rx;
     g.position.y = Math.sin(t * 0.8) * 0.06;
+
+    // per-shape inner motion
+    if (ringA.current) ringA.current.rotation.z = t * 0.7;
+    if (ringB.current) ringB.current.rotation.x = t * 0.5 + 1;
+    if (ringC.current) ringC.current.rotation.y = t * 0.9;
+    portMat.opacity = 0.7 + 0.3 * Math.sin(t * 3);
   });
 
   return (
     <group ref={group} scale={0.001}>
       {shape === "play" && <mesh geometry={play} material={chrome} />}
 
-      {shape === "network" && (
+      {shape === "gimbal" && (
         <>
-          <mesh material={chrome}>
-            <icosahedronGeometry args={[0.62, 1]} />
+          <mesh ref={ringA} material={chrome}>
+            <torusGeometry args={[0.92, 0.045, 16, 80]} />
           </mesh>
-          <mesh>
-            <icosahedronGeometry args={[0.98, 1]} />
-            <meshBasicMaterial
-              wireframe
-              color="#6b79ff"
-              transparent
-              opacity={0.55}
-            />
+          <mesh ref={ringB} material={chrome} rotation={[Math.PI / 2, 0, 0]}>
+            <torusGeometry args={[0.68, 0.045, 16, 80]} />
+          </mesh>
+          <mesh ref={ringC} material={chrome} rotation={[0, Math.PI / 2, 0]}>
+            <torusGeometry args={[0.44, 0.045, 16, 80]} />
+          </mesh>
+          <mesh material={chrome}>
+            <icosahedronGeometry args={[0.17, 0]} />
           </mesh>
         </>
       )}
 
-      {shape === "panels" &&
-        [-1, 0, 1].map((i) => (
-          <mesh
-            key={i}
-            material={chrome}
-            position={[i * 0.12, i * 0.06, i * 0.24]}
-            rotation={[0, i * 0.34, 0]}
-          >
-            <boxGeometry args={[0.86, 1.16, 0.06]} />
+      {shape === "rack" && (
+        <group>
+          <mesh material={chrome}>
+            <boxGeometry args={[1.02, 1.32, 0.52]} />
           </mesh>
-        ))}
+          {[0.42, 0.14, -0.14, -0.42].map((y) => (
+            <mesh key={y} material={portMat} position={[-0.12, y, 0.27]}>
+              <boxGeometry args={[0.56, 0.07, 0.02]} />
+            </mesh>
+          ))}
+          {[0.42, 0.14, -0.14, -0.42].map((y) => (
+            <mesh key={`d${y}`} material={portMat} position={[0.32, y, 0.27]}>
+              <boxGeometry args={[0.1, 0.07, 0.02]} />
+            </mesh>
+          ))}
+        </group>
+      )}
     </group>
   );
 }
 
-function Scene({ shape, pointer }: { shape: IconShape; pointer: Pointer }) {
+function Scene({
+  shape,
+  pointer,
+  drag,
+}: {
+  shape: IconShape;
+  pointer: Pointer;
+  drag: DragRef;
+}) {
   return (
     <>
       <StudioEnv />
+      <DragControls drag={drag} />
       <ambientLight intensity={0.35} />
       <directionalLight position={[4, 5, 6]} intensity={2.2} />
       <directionalLight position={[-5, -1, 2]} intensity={0.7} color="#b06bff" />
       <pointLight position={[0, 1, 5]} intensity={1.2} color="#9aa6ff" />
       <Suspense fallback={null}>
-        <IconMesh shape={shape} pointer={pointer} />
+        <IconMesh shape={shape} pointer={pointer} drag={drag} />
       </Suspense>
     </>
   );
@@ -156,9 +202,10 @@ function Scene({ shape, pointer }: { shape: IconShape; pointer: Pointer }) {
 
 export function ServiceIcon3D({ shape }: { shape: IconShape }) {
   const pointer = usePointer();
+  const drag = useDrag();
   const holder = useRef<HTMLDivElement>(null);
-  const [shown, setShown] = useState(false); // mount once when near
-  const [active, setActive] = useState(false); // render only while on-screen
+  const [shown, setShown] = useState(false);
+  const [active, setActive] = useState(false);
 
   useEffect(() => {
     const el = holder.current;
@@ -176,11 +223,7 @@ export function ServiceIcon3D({ shape }: { shape: IconShape }) {
   }, []);
 
   return (
-    <div
-      ref={holder}
-      className="pointer-events-none relative aspect-[4/3] w-full"
-      aria-hidden
-    >
+    <div ref={holder} className="relative aspect-[4/3] w-full" aria-hidden>
       {shown && (
         <Canvas
           className="!absolute inset-0"
@@ -193,7 +236,7 @@ export function ServiceIcon3D({ shape }: { shape: IconShape }) {
           }}
           camera={{ position: [0, 0, 4], fov: 35 }}
         >
-          <Scene shape={shape} pointer={pointer} />
+          <Scene shape={shape} pointer={pointer} drag={drag} />
         </Canvas>
       )}
     </div>
