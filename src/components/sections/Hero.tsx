@@ -6,6 +6,7 @@ import {
   motion,
   useReducedMotion,
   useScroll,
+  useSpring,
   useTransform,
   type Variants,
 } from "motion/react";
@@ -37,9 +38,15 @@ export function Hero({ headline, subtext }: HeroProps) {
     target: ref,
     offset: ["start start", "end start"],
   });
-  // first texts gracefully leave as you start scrolling
-  const textOpacity = useTransform(scrollYProgress, [0, 0.3], [1, 0]);
-  const textY = useTransform(scrollYProgress, [0, 0.4], [0, -60]);
+  // first texts gracefully leave as you start scrolling — springed so Lenis
+  // micro-scroll jitter doesn't make the text flicker (dim/re-brighten)
+  const rawOpacity = useTransform(scrollYProgress, [0, 0.34], [1, 0]);
+  const textOpacity = useSpring(rawOpacity, {
+    stiffness: 140,
+    damping: 40,
+    restDelta: 0.001,
+  });
+  const textY = useTransform(scrollYProgress, [0, 0.45], [0, -60]);
 
   const idx = headline.toLowerCase().indexOf("powered");
   const line1 = idx > 0 ? headline.slice(0, idx).trim() : headline;

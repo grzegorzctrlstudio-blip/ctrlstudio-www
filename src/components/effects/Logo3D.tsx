@@ -292,6 +292,8 @@ export function Logo3D({
   const fadeRef = useRef(1);
   fadeRef.current = fade;
   const [glb, setGlb] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [active, setActive] = useState(true); // pause rendering when off-screen
 
   useEffect(() => {
     fetch(GLB_URL, { method: "HEAD" })
@@ -299,11 +301,23 @@ export function Logo3D({
       .catch(() => setGlb(false));
   }, []);
 
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => setActive(entries[0].isIntersecting),
+      { rootMargin: "100px 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
   return (
-    <div className={className} aria-hidden>
+    <div ref={rootRef} className={className} aria-hidden>
       <Canvas
         className="!absolute inset-0"
         dpr={[1, 1.75]}
+        frameloop={active ? "always" : "never"}
         gl={{
           antialias: true,
           alpha: transparent,

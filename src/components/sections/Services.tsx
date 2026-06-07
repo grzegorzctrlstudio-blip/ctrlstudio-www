@@ -10,12 +10,13 @@ import { Parallax } from "@/components/effects/Parallax";
 import { ServiceIcon3D, type IconShape } from "@/components/effects/ServiceIcon3D";
 import { TextScramble } from "@/components/ui/text-scramble";
 
-// Each pillar → a distinct real-time 3D form (transparent, mouse-reactive).
+// Each pillar → a distinct real-time 3D form (transparent, mouse-reactive),
+// chosen to match the pillar's description.
 const ICON: Record<ServiceVisual, IconShape> = {
-  experience: "flow", // Content & animacje — flowing chrome knot
+  experience: "play", // Content & animacje — play wedge (video / motion)
   interactive: "network", // Aplikacje interaktywne — node sphere
-  scenography: "panels", // Systemy multimedialne — panel stack
-  product: "flow",
+  scenography: "panels", // Systemy multimedialne — stack of screens
+  product: "play",
 };
 
 export function Services({ services }: { services: Service[] }) {

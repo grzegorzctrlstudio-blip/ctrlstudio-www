@@ -7,11 +7,14 @@ import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment
 
 /**
  * Real-time 3D pillar icons — transparent canvas (no background), chrome PBR
- * with RoomEnvironment reflections, and the SAME global mouse-orbit as the hero
- * logo. Each pillar gets a distinct form. Canvases lazy-mount on scroll so we
- * don't hold more WebGL contexts than needed.
+ * with RoomEnvironment reflections, the SAME global mouse-orbit as the hero
+ * logo. Shapes match each pillar:
+ *   play    → Content & animation (a "play" wedge)
+ *   network → interactive apps / systems (chrome core in a node net)
+ *   panels  → multimedia systems (a stack of screens)
+ * Canvases lazy-mount AND pause (frameloop) when off-screen to stay light.
  */
-export type IconShape = "flow" | "network" | "panels";
+export type IconShape = "play" | "network" | "panels";
 
 /** Global cursor in -1..1 (same mapping as the hero logo). */
 function usePointer() {
@@ -56,9 +59,30 @@ function useChrome() {
   );
 }
 
+function usePlayGeometry() {
+  return useMemo(() => {
+    const s = new THREE.Shape();
+    s.moveTo(-0.42, -0.54);
+    s.lineTo(-0.42, 0.54);
+    s.lineTo(0.58, 0);
+    s.closePath();
+    const g = new THREE.ExtrudeGeometry(s, {
+      depth: 0.34,
+      bevelEnabled: true,
+      bevelThickness: 0.08,
+      bevelSize: 0.08,
+      bevelSegments: 3,
+      curveSegments: 4,
+    });
+    g.center();
+    return g;
+  }, []);
+}
+
 function IconMesh({ shape, pointer }: { shape: IconShape; pointer: Pointer }) {
   const group = useRef<THREE.Group>(null);
   const chrome = useChrome();
+  const play = usePlayGeometry();
   const e = useRef({ x: 0, y: 0 });
   const t0 = useRef<number | null>(null);
 
@@ -81,11 +105,7 @@ function IconMesh({ shape, pointer }: { shape: IconShape; pointer: Pointer }) {
 
   return (
     <group ref={group} scale={0.001}>
-      {shape === "flow" && (
-        <mesh material={chrome}>
-          <torusKnotGeometry args={[0.58, 0.2, 220, 32, 2, 3]} />
-        </mesh>
-      )}
+      {shape === "play" && <mesh geometry={play} material={chrome} />}
 
       {shape === "network" && (
         <>
@@ -137,19 +157,19 @@ function Scene({ shape, pointer }: { shape: IconShape; pointer: Pointer }) {
 export function ServiceIcon3D({ shape }: { shape: IconShape }) {
   const pointer = usePointer();
   const holder = useRef<HTMLDivElement>(null);
-  const [shown, setShown] = useState(false);
+  const [shown, setShown] = useState(false); // mount once when near
+  const [active, setActive] = useState(false); // render only while on-screen
 
   useEffect(() => {
     const el = holder.current;
     if (!el) return;
     const io = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting) {
-          setShown(true);
-          io.disconnect();
-        }
+        const vis = entries[0].isIntersecting;
+        setActive(vis);
+        if (vis) setShown(true);
       },
-      { rootMargin: "300px 0px" },
+      { rootMargin: "200px 0px" },
     );
     io.observe(el);
     return () => io.disconnect();
@@ -164,7 +184,8 @@ export function ServiceIcon3D({ shape }: { shape: IconShape }) {
       {shown && (
         <Canvas
           className="!absolute inset-0"
-          dpr={[1, 1.75]}
+          dpr={[1, 1.6]}
+          frameloop={active ? "always" : "never"}
           gl={{
             antialias: true,
             alpha: true,
