@@ -55,7 +55,7 @@ function Words({ pointer, drag }: { pointer: Pointer; drag: DragRef }) {
 
   const font = useLoader(FontLoader, FONT_URL);
 
-  const { geo, width } = useMemo(() => {
+  const { geo, width, height } = useMemo(() => {
     const g = new TextGeometry(TEXT, {
       font,
       size: 1,
@@ -69,7 +69,11 @@ function Words({ pointer, drag }: { pointer: Pointer; drag: DragRef }) {
     g.computeBoundingBox();
     g.center();
     const bb = g.boundingBox!;
-    return { geo: g, width: bb.max.x - bb.min.x };
+    return {
+      geo: g,
+      width: bb.max.x - bb.min.x,
+      height: bb.max.y - bb.min.y,
+    };
   }, [font]);
 
   const mat = useMemo(
@@ -90,7 +94,10 @@ function Words({ pointer, drag }: { pointer: Pointer; drag: DragRef }) {
     if (t0.current === null) t0.current = t;
     const ease = 1 - Math.pow(1 - Math.min(1, (t - t0.current) / 1.3), 3);
 
-    const s = ((viewport.width * 0.92) / width) * ease;
+    // fit the full width of the screen without clipping vertically
+    const s =
+      Math.min((viewport.width * 0.96) / width, (viewport.height * 0.72) / height) *
+      ease;
     g.scale.setScalar(s);
 
     stepDrag(drag);
@@ -145,7 +152,7 @@ export function ShowreelText3D() {
   return (
     <div
       ref={holder}
-      className="relative h-[15svh] w-full max-w-[1500px] sm:h-[18svh]"
+      className="relative h-[16svh] w-full sm:h-[20svh]"
       aria-label="Content · Technology · Space"
     >
       <Canvas

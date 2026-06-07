@@ -13,6 +13,7 @@ import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { SVGLoader } from "three/examples/jsm/loaders/SVGLoader.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { DragControls, stepDrag, useDrag, type DragRef } from "./drag3d";
 
 /**
  * 3D studio for the real CTRLstudio mark (traced to /assets/ctrl-logo.svg and
@@ -38,85 +39,6 @@ function usePointer() {
 }
 type Pointer = ReturnType<typeof usePointer>;
 type FadeRef = MutableRefObject<number>;
-
-/* ---- grab-to-spin (drag orbit with inertia) ---- */
-type DragState = {
-  dragging: boolean;
-  rx: number;
-  ry: number;
-  vrx: number;
-  vry: number;
-  lx: number;
-  ly: number;
-};
-type DragRef = MutableRefObject<DragState>;
-
-function useDrag(): DragRef {
-  return useRef<DragState>({
-    dragging: false,
-    rx: 0,
-    ry: 0,
-    vrx: 0,
-    vry: 0,
-    lx: 0,
-    ly: 0,
-  });
-}
-
-/** Attaches pointer handlers to the canvas so you can grab + spin the logo. */
-function DragControls({ drag }: { drag: DragRef }) {
-  const { gl } = useThree();
-  useEffect(() => {
-    const el = gl.domElement;
-    el.style.touchAction = "pan-y"; // vertical swipe still scrolls the page
-    el.style.cursor = "grab";
-    const down = (e: PointerEvent) => {
-      drag.current.dragging = true;
-      drag.current.lx = e.clientX;
-      drag.current.ly = e.clientY;
-      drag.current.vrx = 0;
-      drag.current.vry = 0;
-      el.style.cursor = "grabbing";
-    };
-    const move = (e: PointerEvent) => {
-      if (!drag.current.dragging) return;
-      const dx = e.clientX - drag.current.lx;
-      const dy = e.clientY - drag.current.ly;
-      drag.current.lx = e.clientX;
-      drag.current.ly = e.clientY;
-      drag.current.ry += dx * 0.008;
-      drag.current.rx += dy * 0.008;
-      drag.current.vry = dx * 0.008;
-      drag.current.vrx = dy * 0.008;
-    };
-    const up = () => {
-      drag.current.dragging = false;
-      el.style.cursor = "grab";
-    };
-    el.addEventListener("pointerdown", down);
-    window.addEventListener("pointermove", move);
-    window.addEventListener("pointerup", up);
-    return () => {
-      el.removeEventListener("pointerdown", down);
-      window.removeEventListener("pointermove", move);
-      window.removeEventListener("pointerup", up);
-    };
-  }, [gl, drag]);
-  return null;
-}
-
-/** Advance drag inertia + relax the tilt back to level. Call once per frame. */
-function stepDrag(drag: DragRef) {
-  const d = drag.current;
-  if (!d.dragging) {
-    d.rx += d.vrx;
-    d.ry += d.vry;
-    d.vrx *= 0.93;
-    d.vry *= 0.93;
-    d.rx *= 0.96; // ease the up/down tilt back so it never sticks upside-down
-  }
-  d.rx = Math.max(-1.1, Math.min(1.1, d.rx));
-}
 
 interface LogoProps {
   pointer: Pointer;

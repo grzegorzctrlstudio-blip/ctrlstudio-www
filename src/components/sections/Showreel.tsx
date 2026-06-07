@@ -55,8 +55,12 @@ export function Showreel({ data }: { data: Homepage["showreel"] }) {
   return (
     <section ref={ref} id="showreel" className="relative h-[200vh]">
       <div className="sticky top-0 flex h-[100svh] flex-col items-center justify-center gap-5 overflow-hidden px-4 sm:gap-7">
-        {/* CONTENT · TECHNOLOGY · SPACE — real 3D extruded chrome text */}
-        <motion.div style={{ opacity: topOpacity }} className="flex w-full justify-center">
+        {/* CONTENT · TECHNOLOGY · SPACE — real 3D extruded chrome text,
+            full-bleed across the whole page (not clipped in a box) */}
+        <motion.div
+          style={{ opacity: topOpacity }}
+          className="relative left-1/2 w-screen -translate-x-1/2"
+        >
           <ShowreelText3D />
         </motion.div>
 

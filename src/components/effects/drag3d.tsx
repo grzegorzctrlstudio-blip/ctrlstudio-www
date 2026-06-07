@@ -69,15 +69,19 @@ export function DragControls({ drag }: { drag: DragRef }) {
   return null;
 }
 
-/** Advance inertia + relax the tilt back to level. Call once per frame. */
+/**
+ * Advance inertia, then ease BOTH axes back to the home orientation. So after a
+ * fling the element spins on, then always settles back to its starting pose.
+ */
 export function stepDrag(drag: DragRef) {
   const d = drag.current;
   if (!d.dragging) {
     d.rx += d.vrx;
     d.ry += d.vry;
-    d.vrx *= 0.93;
-    d.vry *= 0.93;
-    d.rx *= 0.96;
+    d.vrx *= 0.94;
+    d.vry *= 0.94;
+    d.rx *= 0.94; // return tilt to home
+    d.ry *= 0.94; // return spin to home
   }
-  d.rx = Math.max(-1.1, Math.min(1.1, d.rx));
+  d.rx = Math.max(-1.4, Math.min(1.4, d.rx));
 }

@@ -7,15 +7,15 @@ import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment
 import { DragControls, stepDrag, useDrag, type DragRef } from "./drag3d";
 
 /**
- * Real-time 3D pillar icons — transparent canvas (no background), chrome PBR
- * with RoomEnvironment reflections, global mouse-orbit AND grab-to-spin (drag).
- * Shapes match each pillar:
- *   play   → Content & animation (a "play" wedge)
- *   gimbal → interactive apps / realtime systems (nested spinning rings)
- *   rack   → multimedia systems (a media server with glowing ports)
- * Canvases lazy-mount AND pause (frameloop) when off-screen to stay light.
+ * Real-time 3D pillar icons — transparent canvas, chrome PBR with
+ * RoomEnvironment reflections, global mouse-orbit AND grab-to-spin (drag, which
+ * always settles back to the home pose). Shapes match each pillar:
+ *   play  → Content & animation (a "play" wedge)
+ *   touch → interactive apps (a touchscreen with a live touch ripple)
+ *   rack  → multimedia systems (a media-server rack case: server/router/UPS/drawer)
+ * Canvases lazy-mount AND pause (frameloop) when off-screen.
  */
-export type IconShape = "play" | "gimbal" | "rack";
+export type IconShape = "play" | "touch" | "rack";
 
 function usePointer() {
   const p = useRef({ tx: 0, ty: 0 });
@@ -89,17 +89,41 @@ function IconMesh({
   drag: DragRef;
 }) {
   const group = useRef<THREE.Group>(null);
-  const ringA = useRef<THREE.Mesh>(null);
-  const ringB = useRef<THREE.Mesh>(null);
-  const ringC = useRef<THREE.Mesh>(null);
+  const ripple = useRef<THREE.Mesh>(null);
   const chrome = useChrome();
   const play = usePlayGeometry();
-  const portMat = useMemo(
+  const glow = useMemo(
     () =>
       new THREE.MeshBasicMaterial({
         color: new THREE.Color("#6b79ff"),
         toneMapped: false,
         transparent: true,
+      }),
+    [],
+  );
+  const screen = useMemo(
+    () =>
+      new THREE.MeshBasicMaterial({
+        color: new THREE.Color("#9aa6ff"),
+        toneMapped: false,
+      }),
+    [],
+  );
+  const rippleMat = useMemo(
+    () =>
+      new THREE.MeshBasicMaterial({
+        color: new THREE.Color("#8b9bff"),
+        toneMapped: false,
+        transparent: true,
+      }),
+    [],
+  );
+  const glass = useMemo(
+    () =>
+      new THREE.MeshStandardMaterial({
+        color: new THREE.Color("#0b0b14"),
+        metalness: 0.5,
+        roughness: 0.3,
       }),
     [],
   );
@@ -111,65 +135,113 @@ function IconMesh({
     if (!g) return;
     const t = state.clock.elapsedTime;
     if (t0.current === null) t0.current = t;
-    const p = Math.min(1, (t - t0.current) / 1.1);
-    const ease = 1 - Math.pow(1 - p, 3);
+    const ease = 1 - Math.pow(1 - Math.min(1, (t - t0.current) / 1.1), 3);
 
     g.scale.setScalar(1.15 * ease);
     stepDrag(drag);
     e.current.x += (pointer.current.tx - e.current.x) * 0.06;
     e.current.y += (pointer.current.ty - e.current.y) * 0.06;
+    // sway around home (no endless spin) so a fling always returns home
     g.rotation.y =
       (1 - ease) * -Math.PI * 0.5 +
-      e.current.x * 0.6 +
-      t * 0.16 +
+      e.current.x * 0.5 +
+      Math.sin(t * 0.32) * 0.14 +
       drag.current.ry;
     g.rotation.x =
-      -e.current.y * 0.32 + Math.sin(t * 0.5) * 0.05 + drag.current.rx;
+      -e.current.y * 0.3 + Math.sin(t * 0.5) * 0.05 + drag.current.rx;
     g.position.y = Math.sin(t * 0.8) * 0.06;
 
-    // per-shape inner motion
-    if (ringA.current) ringA.current.rotation.z = t * 0.7;
-    if (ringB.current) ringB.current.rotation.x = t * 0.5 + 1;
-    if (ringC.current) ringC.current.rotation.y = t * 0.9;
-    portMat.opacity = 0.7 + 0.3 * Math.sin(t * 3);
+    // touch ripple loop
+    if (ripple.current) {
+      const ph = (t % 1.7) / 1.7;
+      const sc = 0.12 + ph * 0.62;
+      ripple.current.scale.set(sc, sc, 1);
+      rippleMat.opacity = (1 - ph) * 0.85;
+    }
+    glow.opacity = 0.6 + 0.4 * Math.sin(t * 3);
   });
 
   return (
     <group ref={group} scale={0.001}>
       {shape === "play" && <mesh geometry={play} material={chrome} />}
 
-      {shape === "gimbal" && (
-        <>
-          <mesh ref={ringA} material={chrome}>
-            <torusGeometry args={[0.92, 0.045, 16, 80]} />
-          </mesh>
-          <mesh ref={ringB} material={chrome} rotation={[Math.PI / 2, 0, 0]}>
-            <torusGeometry args={[0.68, 0.045, 16, 80]} />
-          </mesh>
-          <mesh ref={ringC} material={chrome} rotation={[0, Math.PI / 2, 0]}>
-            <torusGeometry args={[0.44, 0.045, 16, 80]} />
-          </mesh>
+      {shape === "touch" && (
+        <group>
           <mesh material={chrome}>
-            <icosahedronGeometry args={[0.17, 0]} />
+            <boxGeometry args={[1.28, 1.5, 0.12]} />
           </mesh>
-        </>
+          <mesh material={glass} position={[0, 0, 0.065]}>
+            <planeGeometry args={[1.08, 1.3]} />
+          </mesh>
+          <mesh ref={ripple} material={rippleMat} position={[0, 0, 0.08]}>
+            <torusGeometry args={[0.5, 0.05, 12, 48]} />
+          </mesh>
+          <mesh material={glow} position={[0, 0, 0.1]}>
+            <sphereGeometry args={[0.08, 16, 16]} />
+          </mesh>
+        </group>
       )}
 
       {shape === "rack" && (
         <group>
+          {/* case body + dark front recess */}
           <mesh material={chrome}>
-            <boxGeometry args={[1.02, 1.32, 0.52]} />
+            <boxGeometry args={[1.06, 1.56, 0.55]} />
           </mesh>
-          {[0.42, 0.14, -0.14, -0.42].map((y) => (
-            <mesh key={y} material={portMat} position={[-0.12, y, 0.27]}>
-              <boxGeometry args={[0.56, 0.07, 0.02]} />
+          <mesh material={glass} position={[0, 0, 0.276]}>
+            <boxGeometry args={[0.94, 1.44, 0.03]} />
+          </mesh>
+
+          {/* media server */}
+          <group position={[0, 0.53, 0.3]}>
+            <mesh material={chrome}>
+              <boxGeometry args={[0.88, 0.3, 0.05]} />
             </mesh>
-          ))}
-          {[0.42, 0.14, -0.14, -0.42].map((y) => (
-            <mesh key={`d${y}`} material={portMat} position={[0.32, y, 0.27]}>
-              <boxGeometry args={[0.1, 0.07, 0.02]} />
+            <mesh material={screen} position={[-0.22, 0, 0.03]}>
+              <boxGeometry args={[0.28, 0.16, 0.01]} />
             </mesh>
-          ))}
+            <mesh material={glow} position={[0.16, 0.05, 0.03]}>
+              <boxGeometry args={[0.05, 0.05, 0.01]} />
+            </mesh>
+            <mesh material={glow} position={[0.28, 0.05, 0.03]}>
+              <boxGeometry args={[0.05, 0.05, 0.01]} />
+            </mesh>
+          </group>
+
+          {/* router (port LEDs) */}
+          <group position={[0, 0.18, 0.3]}>
+            <mesh material={chrome}>
+              <boxGeometry args={[0.88, 0.3, 0.05]} />
+            </mesh>
+            {[-0.3, -0.18, -0.06, 0.06, 0.18, 0.3].map((x) => (
+              <mesh key={x} material={glow} position={[x, 0, 0.03]}>
+                <boxGeometry args={[0.05, 0.11, 0.01]} />
+              </mesh>
+            ))}
+          </group>
+
+          {/* UPS (indicator bar + status light) */}
+          <group position={[0, -0.18, 0.3]}>
+            <mesh material={chrome}>
+              <boxGeometry args={[0.88, 0.3, 0.05]} />
+            </mesh>
+            <mesh material={glow} position={[-0.12, 0, 0.03]}>
+              <boxGeometry args={[0.42, 0.07, 0.01]} />
+            </mesh>
+            <mesh material={screen} position={[0.27, 0, 0.03]}>
+              <circleGeometry args={[0.07, 18]} />
+            </mesh>
+          </group>
+
+          {/* drawer (handle) */}
+          <group position={[0, -0.54, 0.3]}>
+            <mesh material={chrome}>
+              <boxGeometry args={[0.88, 0.3, 0.05]} />
+            </mesh>
+            <mesh material={chrome} position={[0, 0, 0.05]}>
+              <boxGeometry args={[0.44, 0.06, 0.06]} />
+            </mesh>
+          </group>
         </group>
       )}
     </group>

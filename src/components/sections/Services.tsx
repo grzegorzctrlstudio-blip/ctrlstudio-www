@@ -14,8 +14,8 @@ import { TextScramble } from "@/components/ui/text-scramble";
 // chosen to match the pillar's description.
 const ICON: Record<ServiceVisual, IconShape> = {
   experience: "play", // Content & animacje — play wedge (video / motion)
-  interactive: "gimbal", // Aplikacje interaktywne — nested realtime rings
-  scenography: "rack", // Systemy multimedialne — media server with ports
+  interactive: "touch", // Aplikacje interaktywne — touchscreen with live ripple
+  scenography: "rack", // Systemy multimedialne — media-server rack case
   product: "play",
 };
 
