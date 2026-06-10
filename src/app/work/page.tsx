@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import { getProjects } from "@/lib/content";
 import { buildMetadata } from "@/lib/seo";
-import { PageIntro } from "@/components/ui/PageIntro";
-import { Reveal } from "@/components/ui/Reveal";
-import { ProjectCard } from "@/components/ui/ProjectCard";
+import { WorkGalleryView } from "@/components/effects/WorkGalleryView";
 
 export const metadata: Metadata = buildMetadata({
   title: "Work",
@@ -14,24 +12,13 @@ export const metadata: Metadata = buildMetadata({
 
 export default async function WorkPage() {
   const projects = await getProjects();
+  const items = projects
+    .filter((p) => p.thumbnail)
+    .map((p) => ({
+      slug: p.slug,
+      thumbnail: p.thumbnail as string,
+      title: p.title,
+    }));
 
-  return (
-    <>
-      <PageIntro
-        eyebrow="Realizacje"
-        title="Wybrane realizacje"
-        intro="Oprawy eventów, instalacje, prezentacje produktowe, ekspozycje i doświadczenia wizualne — projekty, które łączą content, technologię i przestrzeń."
-      />
-
-      <section className="section pt-4">
-        <div className="container-x grid gap-6 md:grid-cols-2">
-          {projects.map((project, i) => (
-            <Reveal key={project.slug} delay={(i % 2) * 0.08}>
-              <ProjectCard project={project} index={i} />
-            </Reveal>
-          ))}
-        </div>
-      </section>
-    </>
-  );
+  return <WorkGalleryView items={items} />;
 }

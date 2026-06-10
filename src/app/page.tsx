@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getHomepage, getProjects } from "@/lib/content";
 import { buildMetadata } from "@/lib/seo";
-import { HomeBackground } from "@/components/effects/HomeBackground";
+import { WebGLBackground } from "@/components/effects/WebGLBackground";
 import { Hero } from "@/components/sections/Hero";
 import { Showreel } from "@/components/sections/Showreel";
 import { Services } from "@/components/sections/Services";
@@ -18,7 +18,7 @@ export default async function Home() {
 
   return (
     <>
-      <HomeBackground />
+      <WebGLBackground />
       <div className="relative z-10">
         <Hero headline={home.heroHeadline} subtext={home.heroSubtext} />
         <Showreel data={home.showreel} />

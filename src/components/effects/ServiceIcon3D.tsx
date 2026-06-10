@@ -46,14 +46,26 @@ function StudioEnv() {
 }
 
 function useChrome() {
+  // deep-blue dispersive glass — matches the hero blob / brand references
   return useMemo(
     () =>
-      new THREE.MeshStandardMaterial({
-        color: new THREE.Color("#e7ebf4"),
-        metalness: 1,
-        roughness: 0.16,
-        envMapIntensity: 1.35,
+      new THREE.MeshPhysicalMaterial({
+        color: new THREE.Color("#3f7fff"),
+        metalness: 0,
+        roughness: 0.04,
+        transmission: 0.92,
+        ior: 1.47,
+        thickness: 0.5,
+        dispersion: 3.2,
+        clearcoat: 1,
+        clearcoatRoughness: 0.06,
+        iridescence: 0.12,
+        attenuationColor: new THREE.Color("#0a36c8"),
+        attenuationDistance: 0.45,
+        specularColor: new THREE.Color("#ffffff"),
+        envMapIntensity: 2.0,
         side: THREE.DoubleSide,
+        transparent: true,
       }),
     [],
   );

@@ -79,8 +79,8 @@
     --accent-ink: #c4c9ff;
     --accent-2: #b06bff; /* only in atmospheric gradients */
 
-    /* Layout */
-    --container: 86rem;
+    /* Layout — fluid: uses more of wide screens, capped for huge displays */
+    --container: min(95vw, 120rem);
     --gutter: clamp(1.25rem, 4.5vw, 4rem);
     --header-h: 5rem;
 

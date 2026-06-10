@@ -59,7 +59,7 @@ export function Header() {
         )}
       >
         <div
-          className="container-x flex items-center justify-between"
+          className="flex items-center justify-between px-5 sm:px-8"
           style={{ height: "var(--header-h)" }}
         >
           <Link href="/" aria-label="CTRLstudio — strona główna" data-cursor>

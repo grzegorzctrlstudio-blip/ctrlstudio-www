@@ -1,11 +1,17 @@
 "use client";
 
 import { useRef } from "react";
-import { useInView } from "motion/react";
+import {
+  motion,
+  useInView,
+  useReducedMotion,
+  useScroll,
+  useSpring,
+  useTransform,
+} from "motion/react";
 import type { Service, ServiceVisual } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { SectionHeading } from "@/components/ui/SectionHeading";
-import { Reveal } from "@/components/ui/Reveal";
 import { Parallax } from "@/components/effects/Parallax";
 import { ServiceIcon3D, type IconShape } from "@/components/effects/ServiceIcon3D";
 import { TextScramble } from "@/components/ui/text-scramble";
@@ -40,24 +46,36 @@ export function Services({ services }: { services: Service[] }) {
   );
 }
 
+/** A pillar row that scrubs in from its side (alternating) as it scrolls in —
+ *  the same assemble feel as the Selected-work tiles. */
 function ServiceRow({ service, flip }: { service: Service; flip: boolean }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const reduced = useReducedMotion();
   const titleRef = useRef<HTMLHeadingElement>(null);
   const titleInView = useInView(titleRef, { once: true, amount: 0.6 });
 
-  return (
-    <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-16">
-      <Reveal className={cn(flip && "lg:order-2")}>
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start end", "center center"],
+  });
+  const p = useSpring(scrollYProgress, { stiffness: 90, damping: 22, mass: 0.4 });
+  const x = useTransform(p, [0, 0.72], [flip ? 240 : -240, 0]);
+  const y = useTransform(p, [0, 0.72], [90, 0]);
+  const rotateY = useTransform(p, [0, 0.72], [flip ? -30 : 30, 0]);
+  const scale = useTransform(p, [0, 0.72], [0.8, 1]);
+  const opacity = useTransform(p, [0, 0.4], [0, 1]);
+
+  const cls = "grid items-center gap-8 lg:grid-cols-2 lg:gap-16";
+
+  const inner = (
+    <>
+      <div className={cn(flip && "lg:order-2")}>
         <div className="flex flex-col gap-5">
           <span className="font-display text-6xl text-ink/10 sm:text-7xl">
             {service.index}
           </span>
           <h3 ref={titleRef} className="display-lg text-ink">
-            <TextScramble
-              as="span"
-              trigger={titleInView}
-              duration={0.9}
-              speed={0.03}
-            >
+            <TextScramble as="span" trigger={titleInView} duration={0.9} speed={0.03}>
               {service.title}
             </TextScramble>
           </h3>
@@ -82,13 +100,39 @@ function ServiceRow({ service, flip }: { service: Service; flip: boolean }) {
             </ul>
           )}
         </div>
-      </Reveal>
+      </div>
 
-      <Reveal delay={0.1} className={cn(flip && "lg:order-1")}>
+      <div className={cn(flip && "lg:order-1")}>
         <Parallax distance={26}>
           <ServiceIcon3D shape={ICON[service.visual]} />
         </Parallax>
-      </Reveal>
-    </div>
+      </div>
+    </>
+  );
+
+  if (reduced) {
+    return (
+      <div ref={ref} className={cls}>
+        {inner}
+      </div>
+    );
+  }
+
+  return (
+    <motion.div
+      ref={ref}
+      className={cls}
+      style={{
+        x,
+        y,
+        rotateY,
+        scale,
+        opacity,
+        transformPerspective: 1000,
+        willChange: "transform",
+      }}
+    >
+      {inner}
+    </motion.div>
   );
 }

@@ -13,6 +13,7 @@ import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { SVGLoader } from "three/examples/jsm/loaders/SVGLoader.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { DragControls, stepDrag, useDrag, type DragRef } from "./drag3d";
 
 /**
@@ -46,6 +47,7 @@ interface LogoProps {
   scaleFactor: number;
   lift: number;
   drag: DragRef;
+  scrollRef: MutableRefObject<number>;
 }
 
 function StudioEnv() {
@@ -112,17 +114,7 @@ function CalmBackdrop({ pointer }: { pointer: Pointer }) {
   );
 }
 
-function chromeMaterial() {
-  return new THREE.MeshStandardMaterial({
-    color: new THREE.Color("#e6eaf3"),
-    metalness: 1,
-    roughness: 0.15,
-    envMapIntensity: 1.3,
-    side: THREE.DoubleSide,
-  });
-}
-
-function SvgLogo({ pointer, fadeRef, scaleFactor, lift, drag }: LogoProps) {
+function SvgLogo({ pointer, fadeRef, scaleFactor, lift, drag, scrollRef }: LogoProps) {
   const data = useLoader(SVGLoader, SVG_URL);
   const { viewport } = useThree();
   const inner = useRef<THREE.Group>(null);
@@ -148,7 +140,38 @@ function SvgLogo({ pointer, fadeRef, scaleFactor, lift, drag }: LogoProps) {
     return { geo: g, width: bb.max.x - bb.min.x };
   }, [data]);
 
-  const mat = useMemo(chromeMaterial, []);
+  // one physical material that morphs metal → glass → iridescent fluid.
+  // transmission + iridescence start at 1 so their shader paths compile once;
+  // the values are then driven live (uniforms only, no recompiles).
+  const mat = useMemo(
+    () =>
+      new THREE.MeshPhysicalMaterial({
+        color: new THREE.Color("#e6eaf3"),
+        metalness: 1,
+        roughness: 0.18,
+        transmission: 1,
+        ior: 1.5,
+        thickness: 1.6,
+        clearcoat: 1,
+        clearcoatRoughness: 0.1,
+        iridescence: 1,
+        iridescenceIOR: 1.3,
+        envMapIntensity: 1.3,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 1,
+      }),
+    [],
+  );
+  const cols = useMemo(
+    () => ({
+      metal: new THREE.Color("#e6eaf3"),
+      glass: new THREE.Color("#cfe0ff"),
+      fluid: new THREE.Color("#e7d6ff"),
+    }),
+    [],
+  );
+  const sp = useRef(0);
 
   useFrame((state) => {
     if (!inner.current) return;
@@ -163,18 +186,37 @@ function SvgLogo({ pointer, fadeRef, scaleFactor, lift, drag }: LogoProps) {
     stepDrag(drag);
     mouse.current.x += (pointer.current.tx - mouse.current.x) * 0.06;
     mouse.current.y += (pointer.current.ty - mouse.current.y) * 0.06;
-    inner.current.rotation.y =
-      (1 - ease) * -Math.PI * 0.6 +
-      mouse.current.x * 0.5 +
-      Math.sin(t * 0.35) * 0.18 +
-      drag.current.ry;
-    inner.current.rotation.x =
-      -mouse.current.y * 0.26 + Math.sin(t * 0.5) * 0.04 + drag.current.rx;
-    inner.current.position.y = Math.sin(t * 0.8) * 0.05;
+    // paused: idle auto-rotation / intro spin / float / drag-spin — cursor-track only
+    inner.current.rotation.y = mouse.current.x * 0.5;
+    inner.current.rotation.x = -mouse.current.y * 0.26;
+
+    // scroll-driven material morph: metal → glass → iridescent fluid
+    sp.current += (scrollRef.current - sp.current) * 0.07;
+    const p = sp.current;
+    const L = THREE.MathUtils.lerp;
+    if (p < 0.5) {
+      const k = p / 0.5;
+      mat.metalness = L(1, 0, k);
+      mat.roughness = L(0.18, 0.05, k);
+      mat.transmission = L(0, 1, k);
+      mat.thickness = L(1.6, 2, k);
+      mat.iridescence = 0;
+      mat.color.copy(cols.metal).lerp(cols.glass, k);
+    } else {
+      const k = (p - 0.5) / 0.5;
+      mat.metalness = L(0, 0.12, k);
+      mat.roughness = L(0.05, 0.16, k);
+      mat.transmission = L(1, 0.5, k);
+      mat.thickness = L(2, 1.3, k);
+      mat.iridescence = L(0, 1, k);
+      mat.color.copy(cols.glass).lerp(cols.fluid, k);
+    }
+    // flowing shimmer once it's in the fluid phase
+    mat.iridescenceIOR =
+      1.3 + Math.sin(t * 0.7) * 0.12 * THREE.MathUtils.smoothstep(p, 0.5, 1);
 
     const fade = fadeRef.current;
     mat.opacity = fade;
-    mat.transparent = fade < 0.999;
     inner.current.visible = fade > 0.02;
   });
 
@@ -210,19 +252,17 @@ function GlbLogo({ pointer, fadeRef, scaleFactor, lift, drag }: LogoProps) {
     return { s, w: size.x || 1, mats };
   }, [gltf]);
 
-  useFrame((state) => {
+  useFrame(() => {
     if (!inner.current) return;
-    const t = state.clock.elapsedTime;
     inner.current.scale.setScalar(
       Math.min((viewport.width * scaleFactor) / model.w, 2),
     );
     stepDrag(drag);
     mouse.current.x += (pointer.current.tx - mouse.current.x) * 0.06;
     mouse.current.y += (pointer.current.ty - mouse.current.y) * 0.06;
-    inner.current.rotation.y =
-      mouse.current.x * 0.5 + Math.sin(t * 0.25) * 0.08 + drag.current.ry;
-    inner.current.rotation.x = -mouse.current.y * 0.28 + drag.current.rx;
-    inner.current.position.y = Math.sin(t * 0.7) * 0.05;
+    // paused: idle auto-rotation / float / drag-spin — cursor-track only
+    inner.current.rotation.y = mouse.current.x * 0.5;
+    inner.current.rotation.x = -mouse.current.y * 0.28;
 
     const fade = fadeRef.current;
     for (const m of model.mats) {
@@ -249,6 +289,7 @@ function Scene({
   lift,
   transparent,
   drag,
+  scrollRef,
 }: {
   glb: boolean;
   pointer: Pointer;
@@ -257,6 +298,7 @@ function Scene({
   lift: number;
   transparent: boolean;
   drag: DragRef;
+  scrollRef: MutableRefObject<number>;
 }) {
   return (
     <>
@@ -269,9 +311,9 @@ function Scene({
       <pointLight position={[0, 1, 5]} intensity={1.2} color="#9aa6ff" />
       <Suspense fallback={null}>
         {glb ? (
-          <GlbLogo pointer={pointer} fadeRef={fadeRef} scaleFactor={scaleFactor} lift={lift} drag={drag} />
+          <GlbLogo pointer={pointer} fadeRef={fadeRef} scaleFactor={scaleFactor} lift={lift} drag={drag} scrollRef={scrollRef} />
         ) : (
-          <SvgLogo pointer={pointer} fadeRef={fadeRef} scaleFactor={scaleFactor} lift={lift} drag={drag} />
+          <SvgLogo pointer={pointer} fadeRef={fadeRef} scaleFactor={scaleFactor} lift={lift} drag={drag} scrollRef={scrollRef} />
         )}
       </Suspense>
     </>
@@ -298,11 +340,32 @@ export function Logo3D({
   const [glb, setGlb] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(true); // pause rendering when off-screen
+  const scrollRef = useRef(0); // 0 at top → 1 after ~0.75 viewport (drives morph)
 
   useEffect(() => {
     fetch(GLB_URL, { method: "HEAD" })
       .then((r) => setGlb(r.ok))
       .catch(() => setGlb(false));
+  }, []);
+
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    // GSAP ScrollTrigger is Lenis-wired (SmoothScroll) → reliable scroll progress
+    // over the hero. Drives the metal → glass → fluid material morph.
+    const st = ScrollTrigger.create({
+      trigger: el,
+      start: "top top",
+      end: "center top",
+      onUpdate: (self) => {
+        scrollRef.current = self.progress;
+      },
+    });
+    const id = requestAnimationFrame(() => ScrollTrigger.refresh());
+    return () => {
+      cancelAnimationFrame(id);
+      st.kill();
+    };
   }, []);
 
   useEffect(() => {
@@ -337,6 +400,7 @@ export function Logo3D({
           lift={lift}
           transparent={transparent}
           drag={drag}
+          scrollRef={scrollRef}
         />
       </Canvas>
     </div>
